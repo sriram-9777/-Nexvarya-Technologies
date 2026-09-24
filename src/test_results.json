@@ -1,0 +1,186 @@
+{
+  "passedCount": 30,
+  "totalCount": 30,
+  "testResults": [
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Sona Masoori Rice (1 KG Base Price ₹65)",
+      "status": "PASS",
+      "details": "Got ₹65/unit, savings ₹0"
+    },
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Sona Masoori Rice (10 KG Bulk Tier ₹63)",
+      "status": "PASS",
+      "details": "Got ₹63/unit, savings ₹2"
+    },
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Sona Masoori Rice (25 KG Bulk Tier ₹61)",
+      "status": "PASS",
+      "details": "Got ₹61/unit, savings ₹4"
+    },
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Sona Masoori Rice (50 KG Wholesale Tier ₹59)",
+      "status": "PASS",
+      "details": "Got ₹59/unit, savings ₹6"
+    },
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Freedom Sunflower Oil (5 Liters - 5% OFF)",
+      "status": "PASS",
+      "details": "Got ₹142.5/L, savings ₹7.5"
+    },
+    {
+      "category": "Bulk Discount Engine",
+      "name": "Freedom Sunflower Oil (12 Liters - 8% OFF)",
+      "status": "PASS",
+      "details": "Got ₹138/L, savings ₹12"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "Supports KG selling unit (Rice, Dal)",
+      "status": "PASS",
+      "details": "Found 'kg'"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "Supports Liter selling unit (Oil, Milk)",
+      "status": "PASS",
+      "details": "Found 'liter'"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "Supports Unit selling unit (Electronics)",
+      "status": "PASS",
+      "details": "Found 'unit'"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "Supports Service selling unit (AC Repair)",
+      "status": "PASS",
+      "details": "Found 'service'"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "Supports Piece selling unit (Biryani, Shirt)",
+      "status": "PASS",
+      "details": "Found 'piece'"
+    },
+    {
+      "category": "Multi-Unit Selling",
+      "name": "AC Service unit item pricing structured correctly",
+      "status": "PASS",
+      "details": "Product: Split AC Foam Jet Deep Servicing @ ₹600"
+    },
+    {
+      "category": "Shopping Cart Engine",
+      "name": "Cart subtotal calculation before discounts",
+      "status": "PASS",
+      "details": "Expected ₹2375, got ₹2375"
+    },
+    {
+      "category": "Shopping Cart Engine",
+      "name": "Cart net total after tier discounts",
+      "status": "PASS",
+      "details": "Expected ₹2237.5, got ₹2237.5"
+    },
+    {
+      "category": "Shopping Cart Engine",
+      "name": "Cart discount total savings",
+      "status": "PASS",
+      "details": "Expected ₹137.5, got ₹137.5"
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "English & Telugu translation dictionaries active",
+      "status": "PASS",
+      "details": "Loaded translation keys"
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'platformName' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Nexvarya Platform\" | TE: \"నెక్స్‌వర్యా ప్లాట్‌ఫారమ్\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'heroTitle' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Find & Order from Top Local Businesses\" | TE: \"మీ సమీపంలోని ఉత్తమ షాపులను కనుగొనండి & ఆర్డర్ చేయండి\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'heroSubtitle' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Connecting local shops, restaurants, medical stores, and service providers with local customers.\" | TE: \"స్థానిక షాపులు, రెస్టారెంట్లు, మెడికల్ స్టోర్లు మరియు సేవా ప్రదాతలను కస్టమర్లతో అనుసంధానిస్తుంది.\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'featuredShops' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Featured Shops Near You\" | TE: \"మీ సమీపంలోని ప్రముఖ షాపులు\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'addToCart' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Add to Cart\" | TE: \"కార్ట్‌కు జోడించు\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'buyOnWhatsapp' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Order via WhatsApp\" | TE: \"వాట్సాప్ ద్వారా ఆర్డర్ చేయండి\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'yourCart' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Your Shopping Cart\" | TE: \"మీ షాపింగ్ కార్ట్\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'customerAccount' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"User / Customer\" | TE: \"యూజర్ / కస్టమర్\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'shopOwnerAccount' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Shop Owner\" | TE: \"షాప్ యజమాని\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'exploreCategories' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Explore Business Categories\" | TE: \"వ్యాపార వర్గాలను అన్వేషించండి\""
+    },
+    {
+      "category": "Dual-Language Engine",
+      "name": "Key 'whyChooseUs' fully localized (EN & TE)",
+      "status": "PASS",
+      "details": "EN: \"Why Nexvarya Multi-Business Platform?\" | TE: \"నెక్స్‌వర్యా మల్టీ-బిజినెస్ ప్లాట్‌ఫారమ్ ఎందుకు?\""
+    },
+    {
+      "category": "Order & WhatsApp Integration",
+      "name": "WhatsApp URL generated with correct phone digits",
+      "status": "PASS",
+      "details": "https://wa.me/917997679777?text=Hel..."
+    },
+    {
+      "category": "Order & WhatsApp Integration",
+      "name": "WhatsApp URL contains Order ID parameter",
+      "status": "PASS",
+      "details": "Order ID verified in query string"
+    },
+    {
+      "category": "Executive Theme Verification",
+      "name": "Executive theme branding & header components active",
+      "status": "PASS",
+      "details": "Verified Logo.tsx and Header.tsx active"
+    }
+  ]
+}
