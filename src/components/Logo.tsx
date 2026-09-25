@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -13,38 +13,47 @@ export const Logo: React.FC<LogoProps> = ({
   className = '',
   variant = 'dark'
 }) => {
+  const [imgError, setImgError] = useState(false);
+
   const sizeMap = {
-    sm: { img: 'h-8 w-auto', title: 'text-base', sub: 'text-[8px]' },
-    md: { img: 'h-10 w-auto', title: 'text-xl', sub: 'text-[9px]' },
-    lg: { img: 'h-12 w-auto', title: 'text-2xl', sub: 'text-[10px]' },
-    xl: { img: 'h-16 w-auto', title: 'text-3xl', sub: 'text-xs' }
+    sm: { img: 'h-8 w-auto', icon: 'w-7 h-7 text-xs', title: 'text-base', sub: 'text-[8px]' },
+    md: { img: 'h-10 w-auto', icon: 'w-9 h-9 text-sm', title: 'text-xl', sub: 'text-[9px]' },
+    lg: { img: 'h-12 w-auto', icon: 'w-11 h-11 text-base', title: 'text-2xl', sub: 'text-[10px]' },
+    xl: { img: 'h-16 w-auto', icon: 'w-14 h-14 text-xl', title: 'text-3xl', sub: 'text-xs' }
   };
 
-  const { img, title, sub } = sizeMap[size];
+  const { img, icon, title, sub } = sizeMap[size];
 
   return (
     <div className={`inline-flex items-center gap-3 select-none bg-transparent group ${className}`}>
-      {/* Exact User Uploaded Brand Emblem (Transparent Background) */}
+      {/* Brand Emblem */}
       <div className="relative shrink-0 flex items-center justify-center bg-transparent">
-        <img 
-          src="/nexvarya_brand_logo.png" 
-          alt="Nexvarya Technologies Emblem" 
-          className={`${img} max-w-none object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-xs`}
-        />
+        {!imgError ? (
+          <img 
+            src="./nexvarya_brand_logo.png" 
+            alt="Nexvarya Technologies" 
+            onError={() => setImgError(true)}
+            className={`${img} max-w-none object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-xs`}
+          />
+        ) : (
+          <div className={`${icon} rounded-xl bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 border border-emerald-400/40 text-amber-300 font-black flex items-center justify-center shadow-md`}>
+            N
+          </div>
+        )}
       </div>
 
-      {/* Brand Typography matching the logo's Forest Green & Gold aesthetic */}
+      {/* Brand Typography */}
       <div className="flex flex-col justify-center">
         <div className="flex items-baseline tracking-tight leading-none">
           <span className={`font-black ${title} ${
             variant === 'light' ? 'text-white' : 'text-slate-900'
           }`}>
-            Nex<span className="text-[#0E3E2B]">varya</span>
+            Nex<span className="text-[#059669]">varya</span>
           </span>
         </div>
         {showSubtitle && (
           <span className={`${sub} font-black uppercase tracking-[0.24em] mt-1 ${
-            variant === 'light' ? 'text-[#D4AF37]' : 'text-[#B8860B]'
+            variant === 'light' ? 'text-[#f59e0b]' : 'text-[#d97706]'
           }`}>
             Technologies
           </span>
