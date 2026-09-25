@@ -8,6 +8,7 @@ import {
   initialProducts, initialOrders 
 } from '../data/mockData';
 import { translations } from '../data/translations';
+import { checkBackendHealth, apiUsers, apiShops, apiProducts, apiOrders } from '../api';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -114,19 +115,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 2. User & Role state
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('nexvarya_users');
-    const parsed: User[] = saved ? JSON.parse(saved) : initialUsers;
-    return parsed.filter(u => !DEMO_USER_IDS.includes(u.id));
+    if (saved) {
+      try {
+        const parsed: User[] = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return initialUsers;
   });
 
   const [currentUser, setCurrentUserState] = useState<User | null>(() => {
     const saved = localStorage.getItem('nexvarya_current_user');
     if (saved) {
       try {
-        const parsed: User = JSON.parse(saved);
-        if (!DEMO_USER_IDS.includes(parsed.id)) return parsed;
-      } catch (e) {
-        // ignore parse error
-      }
+        return JSON.parse(saved);
+      } catch (e) {}
     }
     return null;
   });
@@ -198,9 +201,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed: Shop[] = JSON.parse(saved);
         if (parsed && parsed.length > 0) return parsed;
-      } catch (e) {
-        // fallback
-      }
+      } catch (e) {}
     }
     return initialShops;
   });
@@ -241,8 +242,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 4. Products State
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('nexvarya_products');
-    const parsed: Product[] = saved ? JSON.parse(saved) : initialProducts;
-    return parsed.filter(p => !DEMO_SHOP_IDS.includes(p.shopId));
+    if (saved) {
+      try {
+        const parsed: Product[] = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return initialProducts;
   });
 
   useEffect(() => {
@@ -387,13 +393,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 8. Orders State
   const [orders, setOrders] = useState<Order[]>(() => {
     const saved = localStorage.getItem('nexvarya_orders');
-    const parsed: Order[] = saved ? JSON.parse(saved) : initialOrders;
-    return parsed.filter(o => !DEMO_SHOP_IDS.includes(o.shopId) && o.id !== 'ORD-9841');
+    if (saved) {
+      try {
+        const parsed: Order[] = JSON.parse(saved);
+        if (parsed) return parsed;
+      } catch (e) {}
+    }
+    return initialOrders;
   });
 
   useEffect(() => {
     localStorage.setItem('nexvarya_orders', JSON.stringify(orders));
   }, [orders]);
+
+  // 9. Live Backend Data Synchronization Effect
+  useEffect(() => {
+    const syncFromBackend = async () => {
+      try {
+        const isOnline = await checkBackendHealth();
+        if (isOnline) {
+          const [fetchedProducts, fetchedShops, fetchedUsers, fetchedOrders] = await Promise.all([
+            apiProducts.getAll().catch(() => null),
+            apiShops.getAll().catch(() => null),
+            apiUsers.getAll().catch(() => null),
+            apiOrders.getAll().catch(() => null)
+          ]);
+
+          if (fetchedProducts && Array.isArray(fetchedProducts) && fetchedProducts.length > 0) {
+            setProducts(fetchedProducts);
+          }
+          if (fetchedShops && Array.isArray(fetchedShops) && fetchedShops.length > 0) {
+            setShops(fetchedShops);
+          }
+          if (fetchedUsers && Array.isArray(fetchedUsers) && fetchedUsers.length > 0) {
+            setUsers(fetchedUsers);
+          }
+          if (fetchedOrders && Array.isArray(fetchedOrders) && fetchedOrders.length > 0) {
+            setOrders(fetchedOrders);
+          }
+        }
+      } catch (e) {
+        // Safe fallback to initialized mock state
+      }
+    };
+    syncFromBackend();
+  }, []);
 
   // Helper: Collision-Resistant Order ID Generator
   const generateOrderId = (): string => {
