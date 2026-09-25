@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/useApp';
 import { User, MapPin, ShoppingBag, Search } from 'lucide-react';
 
 export const CustomerDashboard: React.FC = () => {
@@ -26,8 +26,8 @@ export const CustomerDashboard: React.FC = () => {
       {/* Welcome & Location Header */}
       <div className={`rounded-3xl p-6 sm:p-8 shadow-2xl border text-white flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden backdrop-blur-md ${
         themeMode === 'dark'
-          ? 'bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border-emerald-800/40'
-          : 'bg-gradient-to-r from-emerald-700 via-teal-800 to-amber-800 border-emerald-600'
+          ? 'theme-inverse bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border-emerald-800/40'
+          : 'theme-inverse bg-gradient-to-r from-emerald-700 via-teal-800 to-amber-800 border-emerald-600'
       }`}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="space-y-2 relative z-10">
@@ -35,12 +35,12 @@ export const CustomerDashboard: React.FC = () => {
             <User className="w-4 h-4 text-emerald-400" />
             <span>{t('customerDashboard')}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-serif">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-heading">
             {t('welcomeUser')}, {currentUser?.name || 'Customer'} 👋
           </h1>
           <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
             <MapPin className="w-4 h-4 text-emerald-400" />
-            <span>📍 Your Location: {currentUser?.villageTownCity || 'Vijayawada'}, PIN: {currentUser?.pincode || '520001'}</span>
+            <span>{t("📍 Your Location:")}{currentUser?.villageTownCity || 'Vijayawada'}, PIN: {currentUser?.pincode || '520001'}</span>
           </div>
         </div>
 
@@ -50,23 +50,23 @@ export const CustomerDashboard: React.FC = () => {
             className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/80 hover:bg-slate-900 text-slate-200 font-bold text-xs flex items-center gap-2 transition-all shadow-md"
           >
             <User className="w-4 h-4 text-amber-400" />
-            <span>Edit Profile</span>
+            <span>{t("Edit Profile")}</span>
           </button>
           <button
             onClick={() => setActivePage('businesses')}
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center gap-2 transition-all hover:scale-[1.01]"
           >
             <Search className="w-4 h-4 text-amber-300" />
-            <span>Browse Businesses</span>
+            <span>{t("Browse Businesses")}</span>
           </button>
         </div>
       </div>
 
       {/* Business Categories Quick Grid */}
       <div className="space-y-4">
-        <h2 className={`text-lg font-black tracking-tight font-serif ${
+        <h2 className={`text-lg font-black tracking-tight font-heading ${
           themeMode === 'dark' ? 'text-white' : 'text-slate-900'
-        }`}>Business Categories</h2>
+        }`}>{t("Business Categories")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {categories.map((cat) => (
             <button
@@ -78,7 +78,7 @@ export const CustomerDashboard: React.FC = () => {
                   : 'bg-white hover:bg-emerald-50/80 border-slate-200 hover:border-emerald-300 text-slate-900'
               }`}
             >
-              <h3 className={`font-bold text-xs group-hover:text-amber-500 transition-colors font-serif ${
+              <h3 className={`font-bold text-xs group-hover:text-amber-500 transition-colors font-heading ${
                 themeMode === 'dark' ? 'text-white' : 'text-slate-900'
               }`}>
                 {language === 'te' ? cat.nameTe : cat.name}
@@ -94,12 +94,11 @@ export const CustomerDashboard: React.FC = () => {
       {/* My Orders Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className={`text-lg font-black tracking-tight font-serif ${
+          <h2 className={`text-lg font-black tracking-tight font-heading ${
             themeMode === 'dark' ? 'text-white' : 'text-slate-900'
           }`}>{t('myOrders')}</h2>
           <span className="text-xs text-amber-400 font-bold bg-amber-950/80 px-3 py-1 rounded-full border border-amber-800/60">
-            {myOrders.length} orders total
-          </span>
+            {myOrders.length}{t("orders total")}</span>
         </div>
 
         {myOrders.length === 0 ? (
@@ -107,7 +106,7 @@ export const CustomerDashboard: React.FC = () => {
             themeMode === 'dark' ? 'bg-slate-900/80 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
           }`}>
             <ShoppingBag className="w-10 h-10 text-emerald-500 mx-auto" />
-            <p className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>You haven't placed any orders yet.</p>
+            <p className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>{t("You haven't placed any orders yet.")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -124,11 +123,10 @@ export const CustomerDashboard: React.FC = () => {
                   <div>
                     <span className="font-extrabold text-amber-500 font-mono">{order.id}</span>
                     <span className={`ml-2 ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>• {order.createdAt}</span>
-                    <h3 className={`font-bold text-sm mt-0.5 font-serif ${themeMode === 'dark' ? 'text-white' : 'text-slate-900'}`}>{order.shopName}</h3>
+                    <h3 className={`font-bold text-sm mt-0.5 font-heading ${themeMode === 'dark' ? 'text-white' : 'text-slate-900'}`}>{order.shopName}</h3>
                   </div>
 
-                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold border self-start sm:self-auto ${getStatusColor(order.status)}`}>
-                    Status: {order.status.toUpperCase()}
+                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold border self-start sm:self-auto ${getStatusColor(order.status)}`}>{t("Status:")}{order.status.toUpperCase()}
                   </span>
                 </div>
 
@@ -153,7 +151,7 @@ export const CustomerDashboard: React.FC = () => {
                 <div className={`flex justify-between items-center pt-2 border-t text-xs ${
                   themeMode === 'dark' ? 'border-slate-800/80' : 'border-slate-100'
                 }`}>
-                  <span className={`font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Total Paid Amount:</span>
+                  <span className={`font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{t("Total Paid Amount:")}</span>
                   <span className="text-lg font-black text-amber-500">₹{order.totalAmount.toFixed(0)}</span>
                 </div>
               </div>

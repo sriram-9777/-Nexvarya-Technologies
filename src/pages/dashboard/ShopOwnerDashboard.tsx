@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext';
-import { Product, SellingType, BulkDiscountTier, OrderStatus, ProductStatus, SalesFilterPeriod } from '../../types';
+import { useApp } from '../../context/useApp';
+import { stockState } from '../../utils/commerce';
+import { filterSalesOrders } from '../../utils/reporting';
+import { Product, SellingType, BulkDiscountTier, ProductStatus, SalesFilterPeriod } from '../../types';
 import { QrPosterModal } from '../../components/QrPosterModal';
 import { 
-  Store, Plus, Edit, Trash2, QrCode, Tag, X, 
-  ShoppingBag, ToggleLeft, ToggleRight, User, TrendingUp,
-  PackageCheck, AlertTriangle, CheckCircle, Clock, Filter, BarChart3, FileText, Settings, Image as ImageIcon
+  Store, Plus, Edit, Trash2, QrCode, X,
+  ShoppingBag, ToggleLeft, ToggleRight, TrendingUp,
+  PackageCheck, AlertTriangle, CheckCircle, Filter, BarChart3, FileText, Settings
 } from 'lucide-react';
 
 export const ShopOwnerDashboard: React.FC = () => {
   const { 
     themeMode, myShop, products, addProduct, updateProduct, deleteProduct, 
     orders, updateOrderStatus, toggleShopOpenStatus, t, setActivePage,
-    categories, addShop, currentUser
+    categories, addShop, currentUser, language
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'inventory' | 'orders' | 'reports'>('overview');
@@ -34,7 +36,7 @@ export const ShopOwnerDashboard: React.FC = () => {
   const [prodPrice, setProdPrice] = useState<number>(100);
   const [prodImage, setProdImage] = useState('');
   const [sellingType, setSellingType] = useState<SellingType>('kg');
-  const [stockQty, setStockQty] = useState<number>(50);
+  const [stockQty, setStockQty] = useState<number | undefined>(50);
   const [lowStockLimit, setLowStockLimit] = useState<number>(10);
   const [prodStatus, setProdStatus] = useState<ProductStatus>('active');
   const [enableBulk, setEnableBulk] = useState(true);
@@ -69,15 +71,13 @@ export const ShopOwnerDashboard: React.FC = () => {
           <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-800 border border-emerald-400/40 rounded-2xl flex items-center justify-center text-amber-300 mx-auto shadow-lg">
             <Store className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-serif">Set Up Your Business Profile</h2>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            You are logged in as a Shop Owner. Enter your business details below to open your store on Nexvarya.
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-heading">{t("Set Up Your Business Profile")}</h2>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">{t("You are logged in as a Shop Owner. Enter your business details below to open your store on Nexvarya.")}</p>
         </div>
 
         <form onSubmit={handleQuickCreateShop} className="bg-slate-900/90 border border-emerald-900/40 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-4 backdrop-blur-md">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Business / Shop Name *</label>
+            <label className="text-xs font-semibold text-slate-300">{t("Business / Shop Name *")}</label>
             <input
               type="text"
               required
@@ -89,7 +89,7 @@ export const ShopOwnerDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Category *</label>
+            <label className="text-xs font-semibold text-slate-300">{t("Category *")}</label>
             <select
               value={newCatId}
               onChange={(e) => setNewCatId(e.target.value)}
@@ -102,7 +102,7 @@ export const ShopOwnerDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Shop Address</label>
+            <label className="text-xs font-semibold text-slate-300">{t("Shop Address")}</label>
             <input
               type="text"
               placeholder="Door No, Street, Landmark"
@@ -113,7 +113,7 @@ export const ShopOwnerDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Contact Phone Number</label>
+            <label className="text-xs font-semibold text-slate-300">{t("Contact Phone Number")}</label>
             <input
               type="tel"
               placeholder="10-digit mobile number"
@@ -126,9 +126,7 @@ export const ShopOwnerDashboard: React.FC = () => {
           <button
             type="submit"
             className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 transition-all mt-2"
-          >
-            Create & Open My Shop
-          </button>
+          >{t("Create & Open My Shop")}</button>
         </form>
       </div>
     );
@@ -138,11 +136,13 @@ export const ShopOwnerDashboard: React.FC = () => {
   const shopOrders = orders.filter(o => o.shopId === myShop.id);
 
   // Compute Metrics & Analytics
-  const totalSales = shopOrders.reduce((sum, o) => sum + (o.status === 'completed' ? o.totalAmount : 0), 0);
-  const totalOrdersCount = shopOrders.length;
+  const reportOrders = filterSalesOrders(shopOrders, salesPeriod);
+  const completedOrders = reportOrders.filter(o => o.status === 'completed');
+  const totalSales = reportOrders.reduce((sum, o) => sum + (o.status === 'completed' ? o.totalAmount : 0), 0);
+  const totalOrdersCount = reportOrders.length;
   const pendingOrdersCount = shopOrders.filter(o => o.status === 'pending').length;
   const activeOrdersCount = shopOrders.filter(o => ['pending', 'accepted', 'processing', 'ready'].includes(o.status)).length;
-  const lowStockCount = shopProducts.filter(p => (p.stockQuantity || 0) <= (p.lowStockThreshold || 10)).length;
+  const lowStockCount = shopProducts.filter(p => p.stockQuantity !== undefined && p.stockQuantity <= (p.lowStockThreshold ?? 10)).length;
 
   const openAddModal = () => {
     setEditingProductId(null);
@@ -168,8 +168,8 @@ export const ShopOwnerDashboard: React.FC = () => {
     setProdPrice(p.price);
     setProdImage(p.image || '');
     setSellingType(p.sellingType);
-    setStockQty(p.stockQuantity || 50);
-    setLowStockLimit(p.lowStockThreshold || 10);
+    setStockQty(p.stockQuantity);
+    setLowStockLimit(p.lowStockThreshold ?? 10);
     setProdStatus(p.productStatus || 'active');
     setEnableBulk(p.enableBulkDiscount);
     setBulkTiers(p.bulkDiscounts || []);
@@ -178,7 +178,12 @@ export const ShopOwnerDashboard: React.FC = () => {
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prodName.trim()) return;
+    if (!prodName.trim() || !Number.isFinite(prodPrice) || prodPrice < 0 || (stockQty !== undefined && (!Number.isFinite(stockQty) || stockQty < 0)) || lowStockLimit < 0) return;
+    if (enableBulk && bulkTiers.some(t => !Number.isFinite(t.minQty) || t.minQty <= 0 ||
+      (t.maxQty !== null && t.maxQty < t.minQty) || !Number.isFinite(t.discountValue) || t.discountValue < 0 ||
+      (t.discountType === 'percentage' ? t.discountValue > 100 : t.discountValue > prodPrice))) {
+      window.alert(t('invalidDiscount')); return;
+    }
 
     if (editingProductId) {
       updateProduct(editingProductId, {
@@ -190,7 +195,8 @@ export const ShopOwnerDashboard: React.FC = () => {
         stockQuantity: stockQty,
         lowStockThreshold: lowStockLimit,
         productStatus: prodStatus,
-        stockStatus: stockQty <= 0 ? 'out_of_stock' : stockQty <= lowStockLimit ? 'limited' : 'in_stock',
+        isAvailable: prodStatus === 'active',
+        stockStatus: stockQty === undefined ? 'in_stock' : stockQty <= 0 ? 'out_of_stock' : stockQty <= lowStockLimit ? 'limited' : 'in_stock',
         enableBulkDiscount: enableBulk,
         bulkDiscounts: enableBulk ? bulkTiers : []
       });
@@ -206,8 +212,8 @@ export const ShopOwnerDashboard: React.FC = () => {
         stockQuantity: stockQty,
         lowStockThreshold: lowStockLimit,
         productStatus: prodStatus,
-        stockStatus: stockQty <= 0 ? 'out_of_stock' : stockQty <= lowStockLimit ? 'limited' : 'in_stock',
-        isAvailable: true,
+        isAvailable: prodStatus === 'active',
+        stockStatus: stockQty === undefined ? 'in_stock' : stockQty <= 0 ? 'out_of_stock' : stockQty <= lowStockLimit ? 'limited' : 'in_stock',
         enableBulkDiscount: enableBulk,
         bulkDiscounts: enableBulk ? bulkTiers : []
       });
@@ -249,12 +255,12 @@ export const ShopOwnerDashboard: React.FC = () => {
         themeMode === 'dark' ? 'bg-slate-900 border-emerald-900/40' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-amber-300 border border-emerald-400/40 flex items-center justify-center font-black text-xl shadow-lg font-serif">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-amber-300 border border-emerald-400/40 flex items-center justify-center font-black text-xl shadow-lg font-heading">
             {myShop.businessName.charAt(0)}
           </div>
           <div className="overflow-hidden">
-            <h2 className={`font-extrabold text-sm truncate font-serif ${themeMode === 'dark' ? 'text-white' : 'text-slate-900'}`}>{myShop.businessName}</h2>
-            <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Merchant SaaS</span>
+            <h2 className={`font-extrabold text-sm truncate font-heading ${themeMode === 'dark' ? 'text-white' : 'text-slate-900'}`}>{myShop.businessName}</h2>
+            <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{t("Merchant SaaS")}</span>
           </div>
         </div>
 
@@ -268,7 +274,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             }`}
           >
             <BarChart3 className="w-4 h-4 text-amber-400" />
-            <span>Business Dashboard</span>
+            <span>{t("Business Dashboard")}</span>
           </button>
 
           <button
@@ -278,7 +284,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             }`}
           >
             <Store className="w-4 h-4 text-emerald-400" />
-            <span>Product Catalog ({shopProducts.length})</span>
+            <span>{t("Product Catalog (")}{shopProducts.length})</span>
           </button>
 
           <button
@@ -288,7 +294,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             }`}
           >
             <PackageCheck className="w-4 h-4 text-amber-400" />
-            <span>Inventory Stock</span>
+            <span>{t("Inventory Stock")}</span>
             {lowStockCount > 0 && (
               <span className="ml-auto bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full">
                 {lowStockCount}
@@ -303,7 +309,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             }`}
           >
             <ShoppingBag className="w-4 h-4 text-emerald-400" />
-            <span>Live Order Desk</span>
+            <span>{t("Live Order Desk")}</span>
             {pendingOrdersCount > 0 && (
               <span className="ml-auto bg-rose-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full animate-pulse">
                 {pendingOrdersCount}
@@ -318,7 +324,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             }`}
           >
             <FileText className="w-4 h-4 text-amber-400" />
-            <span>Sales Reports</span>
+            <span>{t("Sales Reports")}</span>
           </button>
         </nav>
 
@@ -328,7 +334,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             className="w-full py-2.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 font-bold text-xs flex items-center gap-2 border border-slate-800 transition-colors"
           >
             <QrCode className="w-4 h-4 text-emerald-400" />
-            <span>Print WhatsApp Poster</span>
+            <span>{t("Print WhatsApp Poster")}</span>
           </button>
 
           <button
@@ -336,7 +342,7 @@ export const ShopOwnerDashboard: React.FC = () => {
             className="w-full py-2.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 font-bold text-xs flex items-center gap-2 border border-slate-800 transition-colors"
           >
             <Settings className="w-4 h-4 text-amber-400" />
-            <span>Shop Settings</span>
+            <span>{t("Shop Settings")}</span>
           </button>
         </div>
       </aside>
@@ -349,20 +355,22 @@ export const ShopOwnerDashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className={`w-3.5 h-3.5 rounded-full ${myShop.isOpen ? 'bg-emerald-500 animate-pulse shadow-md shadow-emerald-500/50' : 'bg-rose-500'}`} />
             <div>
-              <h1 className="text-lg font-black text-white font-serif">{myShop.businessName}</h1>
+              <h1 className="text-lg font-black text-white font-heading">{myShop.businessName}</h1>
               <p className="text-xs text-slate-400">📍 {myShop.address} • 📞 {myShop.phone}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
+              disabled={myShop.status !== 'approved'}
+              title={t(myShop.status)}
               onClick={() => toggleShopOpenStatus(myShop.id)}
               className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-md ${
                 myShop.isOpen ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white' : 'bg-rose-600 text-white'
               }`}
             >
               {myShop.isOpen ? <ToggleRight className="w-5 h-5 text-amber-300" /> : <ToggleLeft className="w-5 h-5" />}
-              <span>{myShop.isOpen ? '🟢 STORE OPEN' : '🔴 STORE CLOSED'}</span>
+              <span>{myShop.status !== 'approved' ? t(myShop.status === 'pending' ? 'pendingApproval' : 'blocked') : myShop.isOpen ? t('openNow') : t('closedNow')}</span>
             </button>
           </div>
         </div>
@@ -375,63 +383,62 @@ export const ShopOwnerDashboard: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/90 p-4 rounded-2xl border border-emerald-900/40 backdrop-blur-md">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
                 <Filter className="w-4 h-4 text-emerald-400" />
-                <span>Sales Filter Period:</span>
+                <span>{t("Sales Filter Period:")}</span>
               </div>
               <select
                 value={salesPeriod}
                 onChange={(e) => setSalesPeriod(e.target.value as SalesFilterPeriod)}
                 className="bg-slate-950 border border-slate-800 text-white text-xs rounded-xl px-4 py-2 focus:outline-none focus:border-emerald-500 font-bold"
               >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="7days">Last 7 Days</option>
-                <option value="30days">Last 30 Days</option>
-                <option value="this_month">This Month</option>
-                <option value="last_month">Last Month</option>
+                <option value="today">{t("Today")}</option>
+                <option value="yesterday">{t("Yesterday")}</option>
+                <option value="7days">{t("Last 7 Days")}</option>
+                <option value="30days">{t("Last 30 Days")}</option>
+                <option value="this_month">{t("This Month")}</option>
+                <option value="last_month">{t("Last Month")}</option>
               </select>
             </div>
 
             {/* Business Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-slate-900/90 border border-emerald-900/40 p-5 rounded-3xl space-y-2 shadow-2xl backdrop-blur-md">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Sales</span>
-                <div className="text-2xl font-black text-amber-400 font-serif">₹{totalSales.toFixed(0)}</div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("Total Sales")}</span>
+                <div className="text-2xl font-black text-amber-400 font-heading">₹{totalSales.toFixed(2)}</div>
                 <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3 text-amber-400" /> Completed Orders Revenue
-                </span>
+                  <TrendingUp className="w-3 h-3 text-amber-400" />{t("Completed Orders Revenue")}</span>
               </div>
 
               <div className="bg-slate-900/90 border border-emerald-900/40 p-5 rounded-3xl space-y-2 shadow-2xl backdrop-blur-md">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Orders</span>
-                <div className="text-2xl font-black text-emerald-400 font-serif">{totalOrdersCount}</div>
-                <span className="text-[10px] text-emerald-300 font-semibold">{activeOrdersCount} Active In-Progress</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("Total Orders")}</span>
+                <div className="text-2xl font-black text-emerald-400 font-heading">{totalOrdersCount}</div>
+                <span className="text-[10px] text-emerald-300 font-semibold">{activeOrdersCount}{t("Active In-Progress")}</span>
               </div>
 
               <div className="bg-slate-900/90 border border-emerald-900/40 p-5 rounded-3xl space-y-2 shadow-2xl backdrop-blur-md">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Products</span>
-                <div className="text-2xl font-black text-teal-400 font-serif">{shopProducts.length}</div>
-                <span className="text-[10px] text-teal-300 font-semibold">In Catalog</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("Total Products")}</span>
+                <div className="text-2xl font-black text-teal-400 font-heading">{shopProducts.length}</div>
+                <span className="text-[10px] text-teal-300 font-semibold">{t("In Catalog")}</span>
               </div>
 
               <div className="bg-slate-900/90 border border-emerald-900/40 p-5 rounded-3xl space-y-2 shadow-2xl backdrop-blur-md">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Low Stock Warning</span>
-                <div className="text-2xl font-black text-amber-400 font-serif">{lowStockCount}</div>
-                <span className="text-[10px] text-amber-300 font-semibold">Items Need Restock</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("Low Stock Warning")}</span>
+                <div className="text-2xl font-black text-amber-400 font-heading">{lowStockCount}</div>
+                <span className="text-[10px] text-amber-300 font-semibold">{t("Items Need Restock")}</span>
               </div>
             </div>
 
             {/* Quick Action Banner */}
-            <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-emerald-800/40 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl backdrop-blur-md">
+            <div className="theme-inverse bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-emerald-800/40 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl backdrop-blur-md">
               <div>
-                <h3 className="text-base font-black text-white font-serif">Expand Your Merchant Catalog</h3>
-                <p className="text-xs text-slate-300">Add new items with custom measurement units (KG, Liter, Piece, Box, Pack) and automated volume discount tiers.</p>
+                <h3 className="text-base font-black text-white font-heading">{t("Expand Your Merchant Catalog")}</h3>
+                <p className="text-xs text-slate-300">{t("Add new items with custom measurement units (KG, Liter, Piece, Box, Pack) and automated volume discount tiers.")}</p>
               </div>
               <button
                 onClick={openAddModal}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-lg shadow-emerald-950/60 flex items-center gap-2 shrink-0 transition-all hover:scale-[1.01]"
               >
                 <Plus className="w-4 h-4 text-amber-300" />
-                <span>Add New Product</span>
+                <span>{t("Add New Product")}</span>
               </button>
             </div>
 
@@ -443,15 +450,15 @@ export const ShopOwnerDashboard: React.FC = () => {
           <div className="space-y-6 animate-in fade-in">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black text-white font-serif">Product Catalog Management</h2>
-                <p className="text-xs text-slate-400">Manage prices, measurement units, and volume discount rules.</p>
+                <h2 className="text-lg font-black text-white font-heading">{t("Product Catalog Management")}</h2>
+                <p className="text-xs text-slate-400">{t("Manage prices, measurement units, and volume discount rules.")}</p>
               </div>
               <button
                 onClick={openAddModal}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-extrabold text-xs shadow-lg shadow-emerald-950/60 flex items-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4 text-amber-300" />
-                <span>Add Product</span>
+                <span>{t("Add Product")}</span>
               </button>
             </div>
 
@@ -473,20 +480,20 @@ export const ShopOwnerDashboard: React.FC = () => {
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                           p.productStatus === 'disabled'
                             ? 'bg-slate-950 text-slate-400 border-slate-800'
-                            : (p.stockQuantity || 0) <= 0
+                            : stockState(p) === 'out_of_stock'
                             ? 'bg-rose-950/90 text-rose-300 border-rose-700/60'
                             : 'bg-emerald-950/90 text-emerald-300 border-emerald-700/60'
                         }`}>
-                          {p.productStatus === 'disabled' ? 'Disabled' : (p.stockQuantity || 0) <= 0 ? 'Out of Stock' : 'Active'}
+                          {t(stockState(p))}
                         </span>
                       </div>
-                      <h3 className="font-black text-sm text-white truncate font-serif">{p.name}</h3>
-                      <div className="text-sm font-black text-amber-400">₹{p.price} / {p.sellingType}</div>
+                      <h3 className="font-black text-sm text-white truncate font-heading">{p.name}</h3>
+                      <div className="text-sm font-black text-amber-400">₹{p.price} / {t(`unit_${p.sellingType}`)}</div>
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 font-semibold">Stock: {p.stockQuantity || 0} {p.sellingType}</span>
+                    <span className="text-slate-400 font-semibold">{t("Stock:")}{p.stockQuantity ?? t('untrackedStock')} {t(`unit_${p.sellingType}`)}</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => openEditModal(p)}
@@ -514,52 +521,48 @@ export const ShopOwnerDashboard: React.FC = () => {
         {activeTab === 'inventory' && (
           <div className="space-y-6 animate-in fade-in">
             <div>
-              <h2 className="text-lg font-black text-white">Inventory Stock Control</h2>
-              <p className="text-xs text-slate-400">Track current stock levels and automated low stock thresholds.</p>
+              <h2 className="text-lg font-black text-white">{t("Inventory Stock Control")}</h2>
+              <p className="text-xs text-slate-400">{t("Track current stock levels and automated low stock thresholds.")}</p>
             </div>
 
             <div className="bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-lg">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] font-black border-b border-slate-800">
                   <tr>
-                    <th className="p-4">Product</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Unit</th>
-                    <th className="p-4">Current Stock</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Action</th>
+                    <th className="p-4">{t("Product")}</th>
+                    <th className="p-4">{t("Category")}</th>
+                    <th className="p-4">{t("Unit")}</th>
+                    <th className="p-4">{t("Current Stock")}</th>
+                    <th className="p-4">{t("Status")}</th>
+                    <th className="p-4 text-right">{t("Action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-medium">
                   {shopProducts.map((p) => {
-                    const isLow = (p.stockQuantity || 0) <= (p.lowStockThreshold || 10);
+                    const isLow = stockState(p) === 'limited';
                     return (
                       <tr key={p.id} className="hover:bg-slate-900/50 transition-colors">
                         <td className="p-4 font-extrabold text-white flex items-center gap-3">
                           <img src={p.image} className="w-8 h-8 rounded-lg object-cover" />
                           <span>{p.name}</span>
                         </td>
-                        <td className="p-4 capitalize">{p.categoryId.replace('cat_', '')}</td>
-                        <td className="p-4 uppercase text-[10px] font-bold text-indigo-400">{p.sellingType}</td>
-                        <td className="p-4 font-black text-white">{p.stockQuantity || 0}</td>
+                        <td className="p-4 capitalize">{categories.find(c => c.id === p.categoryId)?.[language === 'te' ? 'nameTe' : 'name'] || p.categoryId}</td>
+                        <td className="p-4 uppercase text-[10px] font-bold text-indigo-400">{t(`unit_${p.sellingType}`)}</td>
+                        <td className="p-4 font-black text-white">{p.stockQuantity ?? t('untrackedStock')}</td>
                         <td className="p-4">
                           {isLow ? (
                             <span className="inline-flex items-center gap-1.5 text-amber-400 font-black text-[10px] bg-amber-950/60 border border-amber-800 px-2.5 py-1 rounded-full">
-                              <AlertTriangle className="w-3 h-3" /> Low Stock
-                            </span>
+                              <AlertTriangle className="w-3 h-3" />{t("Low Stock")}</span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 text-emerald-400 font-black text-[10px] bg-emerald-950/60 border border-emerald-800 px-2.5 py-1 rounded-full">
-                              <CheckCircle className="w-3 h-3" /> In Stock
-                            </span>
+                              <CheckCircle className="w-3 h-3" />{t("In Stock")}</span>
                           )}
                         </td>
                         <td className="p-4 text-right">
                           <button
                             onClick={() => openEditModal(p)}
                             className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold"
-                          >
-                            Update Stock
-                          </button>
+                          >{t("Update Stock")}</button>
                         </td>
                       </tr>
                     );
@@ -574,14 +577,14 @@ export const ShopOwnerDashboard: React.FC = () => {
         {activeTab === 'orders' && (
           <div className="space-y-6 animate-in fade-in">
             <div>
-              <h2 className="text-lg font-black text-white">Live Customer Orders Desk</h2>
-              <p className="text-xs text-slate-400">Accept, prepare, and complete live incoming orders.</p>
+              <h2 className="text-lg font-black text-white">{t("Live Customer Orders Desk")}</h2>
+              <p className="text-xs text-slate-400">{t("Accept, prepare, and complete live incoming orders.")}</p>
             </div>
 
             {shopOrders.length === 0 ? (
               <div className="bg-slate-950 border border-slate-800 rounded-3xl p-12 text-center text-slate-400 space-y-3">
                 <ShoppingBag className="w-12 h-12 text-slate-700 mx-auto" />
-                <p className="text-xs font-bold">No orders received yet.</p>
+                <p className="text-xs font-bold">{t("No orders received yet.")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -600,45 +603,33 @@ export const ShopOwnerDashboard: React.FC = () => {
                             <button
                               onClick={() => updateOrderStatus(order.id, 'accepted')}
                               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black"
-                            >
-                              Accept Order
-                            </button>
+                            >{t("Accept Order")}</button>
                             <button
                               onClick={() => updateOrderStatus(order.id, 'rejected')}
                               className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black"
-                            >
-                              Reject
-                            </button>
+                            >{t("Reject")}</button>
                           </>
                         )}
                         {order.status === 'accepted' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'processing')}
                             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black"
-                          >
-                            Start Preparing
-                          </button>
+                          >{t("Start Preparing")}</button>
                         )}
                         {order.status === 'processing' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'ready')}
                             className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-black"
-                          >
-                            Mark Ready
-                          </button>
+                          >{t("Mark Ready")}</button>
                         )}
                         {order.status === 'ready' && (
                           <button
                             onClick={() => updateOrderStatus(order.id, 'completed')}
                             className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black"
-                          >
-                            Mark Completed
-                          </button>
+                          >{t("Mark Completed")}</button>
                         )}
                         {order.status === 'completed' && (
-                          <span className="px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs font-black">
-                            ✓ COMPLETED
-                          </span>
+                          <span className="px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs font-black">{t("✓ COMPLETED")}</span>
                         )}
                       </div>
                     </div>
@@ -665,25 +656,25 @@ export const ShopOwnerDashboard: React.FC = () => {
         {activeTab === 'reports' && (
           <div className="space-y-6 animate-in fade-in">
             <div>
-              <h2 className="text-lg font-black text-white">Business Performance Reports</h2>
-              <p className="text-xs text-slate-400">Analyze revenue growth and customer order insights.</p>
+              <h2 className="text-lg font-black text-white">{t("Business Performance Reports")}</h2>
+              <p className="text-xs text-slate-400">{t("Analyze revenue growth and customer order insights.")}</p>
             </div>
 
             <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 space-y-4">
-              <h3 className="text-xs font-black uppercase text-emerald-400 tracking-wider">Revenue Breakdown</h3>
+              <h3 className="text-xs font-black uppercase text-emerald-400 tracking-wider">{t("Revenue Breakdown")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block">Total Gross Revenue</span>
-                  <span className="text-xl font-black text-white">₹{totalSales.toFixed(0)}</span>
+                  <span className="text-xs text-slate-400 block">{t("Total Gross Revenue")}</span>
+                  <span className="text-xl font-black text-white">₹{totalSales.toFixed(2)}</span>
                 </div>
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block">Total Orders Processed</span>
+                  <span className="text-xs text-slate-400 block">{t("Total Orders Processed")}</span>
                   <span className="text-xl font-black text-white">{totalOrdersCount}</span>
                 </div>
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800">
-                  <span className="text-xs text-slate-400 block">Average Order Value</span>
+                  <span className="text-xs text-slate-400 block">{t("Average Order Value")}</span>
                   <span className="text-xl font-black text-emerald-400">
-                    ₹{totalOrdersCount > 0 ? (totalSales / totalOrdersCount).toFixed(0) : '0'}
+                    ₹{completedOrders.length > 0 ? (totalSales / completedOrders.length).toFixed(2) : '0'}
                   </span>
                 </div>
               </div>
@@ -708,7 +699,7 @@ export const ShopOwnerDashboard: React.FC = () => {
 
             <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-slate-300">Product Name *</label>
+                <label className="font-bold text-slate-300">{t("Product Name *")}</label>
                 <input
                   type="text"
                   required
@@ -721,9 +712,9 @@ export const ShopOwnerDashboard: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Selling Price (₹) *</label>
+                  <label className="font-bold text-slate-300">{t("Selling Price (₹) *")}</label>
                   <input
-                    type="number"
+                    type="number" min="0" step="any"
                     required
                     value={prodPrice}
                     onChange={(e) => setProdPrice(Number(e.target.value))}
@@ -732,36 +723,36 @@ export const ShopOwnerDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Measurement Unit *</label>
+                  <label className="font-bold text-slate-300">{t("Measurement Unit *")}</label>
                   <select
                     value={sellingType}
                     onChange={(e) => setSellingType(e.target.value as SellingType)}
                     className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500 uppercase font-bold"
                   >
-                    <option value="unit">Unit</option>
+                    <option value="unit">{t("Unit")}</option>
                     <option value="kg">KG</option>
-                    <option value="liter">Liter</option>
-                    <option value="piece">Piece</option>
-                    <option value="box">Box</option>
-                    <option value="pack">Pack</option>
-                    <option value="custom">Custom</option>
+                    <option value="liter">{t("Liter")}</option>
+                    <option value="piece">{t("Piece")}</option>
+                    <option value="box">{t("Box")}</option>
+                    <option value="pack">{t("Pack")}</option>
+                    {(['gram', 'ml', 'meter', 'dozen', 'service', 'other'] as SellingType[]).map(unit => <option key={unit} value={unit}>{t(`unit_${unit}`)}</option>)}
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Available Stock Quantity</label>
+                  <label className="font-bold text-slate-300">{t("Available Stock Quantity")}</label>
                   <input
-                    type="number"
-                    value={stockQty}
-                    onChange={(e) => setStockQty(Number(e.target.value))}
+                    type="number" min="0" step="any"
+                    value={stockQty ?? ''}
+                    onChange={(e) => setStockQty(e.target.value === '' ? undefined : Number(e.target.value))}
                     className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Low Stock Alert Level</label>
+                  <label className="font-bold text-slate-300">{t("Low Stock Alert Level")}</label>
                   <input
-                    type="number"
+                    type="number" min="0" step="any"
                     value={lowStockLimit}
                     onChange={(e) => setLowStockLimit(Number(e.target.value))}
                     className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500"
@@ -770,7 +761,7 @@ export const ShopOwnerDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-300">Image URL</label>
+                <label className="font-bold text-slate-300">{t("Image URL")}</label>
                 <input
                   type="text"
                   value={prodImage}
@@ -781,7 +772,7 @@ export const ShopOwnerDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-300">Description</label>
+                <label className="font-bold text-slate-300">{t("Description")}</label>
                 <textarea
                   value={prodDesc}
                   onChange={(e) => setProdDesc(e.target.value)}
@@ -799,7 +790,7 @@ export const ShopOwnerDashboard: React.FC = () => {
                     onChange={(e) => setEnableBulk(e.target.checked)}
                     className="rounded bg-slate-950 border-slate-700 text-emerald-600 focus:ring-0"
                   />
-                  <span>Enable Volume Bulk Tier Pricing</span>
+                  <span>{t("Enable Volume Bulk Tier Pricing")}</span>
                 </label>
 
                 {enableBulk && (
@@ -807,7 +798,7 @@ export const ShopOwnerDashboard: React.FC = () => {
                     {bulkTiers.map((tier, idx) => (
                       <div key={tier.id} className="flex items-center gap-2">
                         <input
-                          type="number"
+                          type="number" min="0" step="any"
                           value={tier.minQty}
                           onChange={(e) => updateTier(idx, 'minQty', Number(e.target.value))}
                           placeholder="Min Qty"
@@ -815,7 +806,7 @@ export const ShopOwnerDashboard: React.FC = () => {
                         />
                         <span className="text-slate-500">to</span>
                         <input
-                          type="number"
+                          type="number" min="0" step="any"
                           value={tier.maxQty || ''}
                           onChange={(e) => updateTier(idx, 'maxQty', e.target.value ? Number(e.target.value) : null)}
                           placeholder="Max (+)"
@@ -823,7 +814,7 @@ export const ShopOwnerDashboard: React.FC = () => {
                         />
                         <span className="text-slate-500">= ₹</span>
                         <input
-                          type="number"
+                          type="number" min="0" step="any"
                           value={tier.discountValue}
                           onChange={(e) => updateTier(idx, 'discountValue', Number(e.target.value))}
                           placeholder="Rate ₹"
@@ -842,9 +833,7 @@ export const ShopOwnerDashboard: React.FC = () => {
                       type="button"
                       onClick={addTierRow}
                       className="text-xs font-bold text-emerald-400 hover:underline pt-1 block"
-                    >
-                      + Add Discount Tier
-                    </button>
+                    >{t("+ Add Discount Tier")}</button>
                   </div>
                 )}
               </div>
@@ -854,15 +843,11 @@ export const ShopOwnerDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setShowProductModal(false)}
                   className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-bold"
-                >
-                  Cancel
-                </button>
+                >{t("Cancel")}</button>
                 <button
                   type="submit"
                   className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md"
-                >
-                  Save Product
-                </button>
+                >{t("Save Product")}</button>
               </div>
             </form>
           </div>

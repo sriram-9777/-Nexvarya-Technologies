@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { verifyPassword, hashPassword } from '../utils/passwords';
+import { useApp } from '../context/useApp';
 import { Logo } from '../components/Logo';
 import { Lock, Mail, ArrowRight, Loader2, User as UserIcon, Store } from 'lucide-react';
-import { loginWithGoogleFirebase } from '../firebase';
+
 import { UserRole } from '../types';
 
 export const Login: React.FC = () => {
-  const { themeMode, t, users, setCurrentUser, setCurrentRole, setActivePage, addUser, addShop, updateUser } = useApp();
+  const { themeMode, t, users, setCurrentUser, setCurrentRole, setActivePage, addUser, updateUser } = useApp();
   const [loginRole, setLoginRole] = useState<UserRole>('customer');
   const [emailOrMobile, setEmailOrMobile] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailOrMobile.trim()) {
       setErrorMsg('Please enter your Email or Mobile Number');
@@ -21,15 +22,16 @@ export const Login: React.FC = () => {
     }
 
     const matchedUser = users.find(
-      u => u.email.toLowerCase() === emailOrMobile.toLowerCase() || u.mobile === emailOrMobile
+      u => u.email.toLowerCase() === emailOrMobile.trim().toLowerCase() || u.mobile === emailOrMobile.trim()
     );
 
     if (matchedUser) {
-      const targetRole = loginRole === 'shop_owner' ? 'shop_owner' : matchedUser.role;
-      if (targetRole !== matchedUser.role) {
-        updateUser(matchedUser.id, { role: targetRole });
+      if (matchedUser.status === 'blocked' || !(await verifyPassword(password, matchedUser.password))) {
+        setErrorMsg(t('invalidCredentials')); return;
       }
-      const userToLogin = { ...matchedUser, role: targetRole };
+      const targetRole = matchedUser.role;
+      const userToLogin = { ...matchedUser, password: matchedUser.password?.startsWith('pbkdf2:') ? matchedUser.password : await hashPassword(password) };
+      updateUser(matchedUser.id, { password: userToLogin.password });
       setCurrentUser(userToLogin);
       if (targetRole === 'admin') setActivePage('admin-dashboard');
       else if (targetRole === 'shop_owner') setActivePage('shop-dashboard');
@@ -43,6 +45,7 @@ export const Login: React.FC = () => {
     setIsGoogleLoading(true);
     setErrorMsg('');
     try {
+      const { loginWithGoogleFirebase } = await import('../firebase');
       const res = await loginWithGoogleFirebase();
       const googleUser = res.user;
 
@@ -52,11 +55,9 @@ export const Login: React.FC = () => {
       const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
       if (existingUser) {
-        const targetRole = loginRole === 'shop_owner' ? 'shop_owner' : existingUser.role;
-        if (targetRole !== existingUser.role) {
-          updateUser(existingUser.id, { role: targetRole });
-        }
-        const userToLogin = { ...existingUser, role: targetRole };
+        if (existingUser.status === 'blocked') { setErrorMsg(t('accountBlocked')); return; }
+        const targetRole = existingUser.role;
+        const userToLogin = existingUser;
         setCurrentUser(userToLogin);
         if (targetRole === 'admin') setActivePage('admin-dashboard');
         else if (targetRole === 'shop_owner') setActivePage('shop-dashboard');
@@ -66,9 +67,9 @@ export const Login: React.FC = () => {
           name,
           email,
           mobile: googleUser.phoneNumber || '',
-          address: 'Google Authenticated User',
-          villageTownCity: 'Vijayawada',
-          pincode: '520001',
+          address: '',
+          villageTownCity: '',
+          pincode: '',
           state: 'Andhra Pradesh',
           country: 'India',
           language: 'en',
@@ -76,24 +77,6 @@ export const Login: React.FC = () => {
           status: 'active'
         });
 
-        if (loginRole === 'shop_owner') {
-          addShop({
-            ownerId: newUser.id,
-            businessName: `${name}'s Store`,
-            categoryId: 'cat_grocery',
-            address: 'Main Market Road',
-            pincode: '520001',
-            state: 'Andhra Pradesh',
-            phone: googleUser.phoneNumber || '9876543210',
-            email: email,
-            description: `${name}'s store on Nexvarya.`,
-            openingTime: '08:00 AM',
-            closingTime: '09:00 PM',
-            whatsappNumber: googleUser.phoneNumber || '',
-            rating: 5.0,
-            reviewCount: 1
-          });
-        }
 
         setCurrentUser(newUser);
         setCurrentRole(loginRole);
@@ -128,9 +111,7 @@ export const Login: React.FC = () => {
       <div className="text-center space-y-3 flex flex-col items-center">
         <Logo size="lg" variant={themeMode === 'dark' ? 'light' : 'dark'} />
         <h1 className={`text-2xl font-extrabold tracking-tight pt-2 ${themeMode === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>{t('login')}</h1>
-        <p className={`text-xs ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-          Access your Nexvarya Customer or Shop Owner Dashboard
-        </p>
+        <p className={`text-xs ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{t("Access your Nexvarya Customer or Shop Owner Dashboard")}</p>
       </div>
 
       <div className={`border p-6 sm:p-8 rounded-3xl shadow-xl space-y-4 transition-colors duration-300 ${
@@ -151,7 +132,7 @@ export const Login: React.FC = () => {
             }`}
           >
             <UserIcon className="w-4 h-4" />
-            <span>Customer</span>
+            <span>{t("Customer")}</span>
           </button>
           <button
             type="button"
@@ -163,7 +144,7 @@ export const Login: React.FC = () => {
             }`}
           >
             <Store className="w-4 h-4" />
-            <span>Shop Owner</span>
+            <span>{t("Shop Owner")}</span>
           </button>
         </div>
 
@@ -206,17 +187,17 @@ export const Login: React.FC = () => {
               />
             </svg>
           )}
-          <span>Continue with Google as {loginRole === 'shop_owner' ? 'Shop Owner' : 'Customer'}</span>
+          <span>{t("Continue with Google as")}{loginRole === 'shop_owner' ? 'Shop Owner' : 'Customer'}</span>
         </button>
 
         <div className="relative flex items-center justify-center my-2">
           <div className="border-t border-slate-200 w-full"></div>
-          <span className="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase tracking-wider">or email</span>
+          <span className="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase tracking-wider">{t("or email")}</span>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">Email ID / Mobile Number</label>
+            <label className="text-xs font-semibold text-slate-700">{t("Email ID / Mobile Number")}</label>
             <div className="relative">
               <input
                 type="text"
@@ -246,11 +227,8 @@ export const Login: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center gap-2 text-slate-600 cursor-pointer">
-              <input type="checkbox" className="rounded bg-slate-100 border-slate-300 text-emerald-600 focus:ring-0" />
-              <span>Remember Me</span>
-            </label>
-            <button type="button" className="text-emerald-700 hover:underline font-bold">Forgot Password?</button>
+
+            <button type="button" onClick={() => setErrorMsg(t('passwordHelp'))} className="text-emerald-700 hover:underline font-bold">{t("Forgot Password?")}</button>
           </div>
 
           <button

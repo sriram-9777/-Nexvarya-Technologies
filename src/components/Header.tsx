@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { Logo } from './Logo';
-import { Globe, Search, Menu, X, ChevronDown, Sparkles, User, LogOut, Shield, Store, Sun, Moon } from 'lucide-react';
+import { Globe, Search, Menu, X, ChevronDown, Sparkles, User, LogOut, Shield, Store, Sun, Moon, ShoppingBag } from 'lucide-react';
 
 interface HeaderProps {
   onOpenCart?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = () => {
+export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
   const { 
-    themeMode, toggleThemeMode,
+    themeMode, toggleThemeMode, cart,
     language, setLanguage, t, 
     currentUser, setCurrentUser, currentRole,
     activePage, setActivePage,
@@ -71,43 +71,37 @@ export const Header: React.FC<HeaderProps> = () => {
       {currentUser && (
         <div className={`px-4 py-1.5 text-[11px] font-bold transition-all text-white flex items-center justify-between border-b ${
           currentRole === 'shop_owner'
-            ? 'bg-gradient-to-r from-emerald-950 via-emerald-900 to-amber-950 border-amber-500/30'
+            ? 'theme-inverse bg-gradient-to-r from-emerald-950 via-emerald-900 to-amber-950 border-amber-500/30'
             : currentRole === 'admin'
-            ? 'bg-gradient-to-r from-slate-950 via-amber-950 to-emerald-950 border-amber-500/30'
-            : 'bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-950 border-emerald-500/20'
+            ? 'theme-inverse bg-gradient-to-r from-slate-950 via-amber-950 to-emerald-950 border-amber-500/30'
+            : 'theme-inverse bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-950 border-emerald-500/20'
         }`}>
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-2">
               {currentRole === 'shop_owner' ? (
                 <>
                   <Store className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                  <span>🏪 MERCHANT PORTAL: Logged in as <strong className="text-amber-300 font-extrabold">{currentUser.name}</strong></span>
+                  <span>{t("🏪 MERCHANT PORTAL: Logged in as")}<strong className="text-amber-300 font-extrabold">{currentUser.name}</strong></span>
                 </>
               ) : currentRole === 'admin' ? (
                 <>
                   <Shield className="w-3.5 h-3.5 text-amber-400" />
-                  <span>🛡️ PLATFORM ADMIN PANEL: Logged in as <strong className="text-amber-300 font-extrabold">{currentUser.name}</strong></span>
+                  <span>{t("🛡️ PLATFORM ADMIN PANEL: Logged in as")}<strong className="text-amber-300 font-extrabold">{currentUser.name}</strong></span>
                 </>
               ) : (
                 <>
                   <User className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>🛍️ CUSTOMER PORTAL: Welcome <strong className="text-emerald-300 font-extrabold">{currentUser.name}</strong> ({currentUser.villageTownCity || 'Vijayawada'})</span>
+                  <span>{t("🛍️ CUSTOMER PORTAL: Welcome")}<strong className="text-emerald-300 font-extrabold">{currentUser.name}</strong> ({currentUser.villageTownCity || 'Vijayawada'})</span>
                 </>
               )}
             </div>
 
             <div className="hidden sm:flex items-center gap-3 font-semibold">
-              <button onClick={() => handleNavigation(getDashboardPage())} className="hover:underline text-amber-300 font-bold">
-                Go to Dashboard
-              </button>
+              <button onClick={() => handleNavigation(getDashboardPage())} className="hover:underline text-amber-300 font-bold">{t("Go to Dashboard")}</button>
               <span className="text-slate-500">•</span>
-              <button onClick={() => handleNavigation('profile')} className="hover:underline text-white/90">
-                My Account
-              </button>
+              <button onClick={() => handleNavigation('profile')} className="hover:underline text-white/90">{t("My Account")}</button>
               <span className="text-slate-500">•</span>
-              <button onClick={handleLogout} className="hover:underline text-rose-300">
-                Logout
-              </button>
+              <button onClick={handleLogout} className="hover:underline text-rose-300">{t("Logout")}</button>
             </div>
           </div>
         </div>
@@ -115,7 +109,7 @@ export const Header: React.FC<HeaderProps> = () => {
 
       {/* Main Header Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+        <div className="flex items-center justify-between min-h-20 py-3 gap-2 flex-wrap">
           
           {/* Logo & Brand - Click scrolls to top of Home */}
           <button 
@@ -283,8 +277,12 @@ export const Header: React.FC<HeaderProps> = () => {
           </nav>
 
           {/* Right Action Controls: Login & Sign Up + Demo + Theme + Language */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex flex-wrap max-w-full items-center gap-2 sm:gap-2.5">
 
+            <button onClick={onOpenCart} aria-label={t('yourCart')} className="relative p-2 rounded-xl border border-emerald-500/40 text-emerald-500 shrink-0">
+              <ShoppingBag className="w-5 h-5" />
+              {cart.length > 0 && <span className="absolute -top-2 -right-2 rounded-full bg-emerald-700 text-white text-[10px] px-1.5">{cart.length}</span>}
+            </button>
             {/* Dark / Light Theme Toggle Switch */}
             <button
               onClick={toggleThemeMode}
@@ -293,26 +291,26 @@ export const Header: React.FC<HeaderProps> = () => {
                   ? 'bg-slate-900 text-amber-300 border-amber-500/40 hover:bg-slate-800 shadow-xs'
                   : 'bg-amber-50 text-amber-900 border-amber-300/80 hover:bg-amber-100 shadow-xs'
               }`}
-              title={themeMode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={themeMode === 'dark' ? t('lightMode') : t('darkMode')}
             >
               {themeMode === 'dark' ? (
                 <>
                   <Sun className="w-4 h-4 text-amber-400" />
-                  <span className="hidden sm:inline">Light</span>
+                  <span className="hidden sm:inline">{t('lightMode')}</span>
                 </>
               ) : (
                 <>
                   <Moon className="w-4 h-4 text-emerald-700" />
-                  <span className="hidden sm:inline">Dark</span>
+                  <span className="hidden sm:inline">{t('darkMode')}</span>
                 </>
               )}
             </button>
             
             {/* Demo Switcher - Shown ONLY when no user is logged in */}
-            {!currentUser && (
+            {import.meta.env.DEV && !currentUser && (
               <button
                 onClick={toggleDemoBar}
-                className={`hidden sm:flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold transition-colors border ${
+                className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold transition-colors border ${
                   themeMode === 'dark'
                     ? 'bg-slate-900 text-emerald-400 hover:bg-slate-800 border-emerald-900/60'
                     : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-200/80'
@@ -320,7 +318,7 @@ export const Header: React.FC<HeaderProps> = () => {
                 title="Toggle Demo Mode Switcher"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{showDemoBar ? 'Hide Switcher' : 'Demo Switcher'}</span>
+                <span className="hidden sm:inline">{showDemoBar ? t('hideDemo') : t('demoRoleSwitcher')}</span>
               </button>
             )}
 
@@ -333,7 +331,7 @@ export const Header: React.FC<HeaderProps> = () => {
                     ? 'bg-slate-900 text-slate-200 border-slate-800 hover:bg-slate-800'
                     : 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200/80'
                 }`}
-                title="Change Language"
+                title={t('language')} aria-expanded={langDropdownOpen}
               >
                 <Globe className="w-4 h-4 text-emerald-500" />
                 <span>{language === 'en' ? 'GB EN' : 'IN TEL'}</span>
@@ -393,10 +391,10 @@ export const Header: React.FC<HeaderProps> = () => {
                 <button
                   onClick={() => handleNavigation('profile')}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 bg-white hover:bg-emerald-50 text-emerald-800 font-bold text-xs shadow-xs transition-all"
-                  title="My Profile"
+                  title={t("My Profile")}
                 >
                   <User className="w-4 h-4 text-emerald-600" />
-                  <span className="hidden md:inline">My Profile</span>
+                  <span className="hidden md:inline">{t("My Profile")}</span>
                 </button>
 
                 <button
@@ -426,7 +424,7 @@ export const Header: React.FC<HeaderProps> = () => {
 
             {/* Mobile Hamburger Menu Toggle */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={t('menu')} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -444,6 +442,7 @@ export const Header: React.FC<HeaderProps> = () => {
                 placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleNavigation('businesses'); }}
                 className="w-full bg-slate-100 text-slate-800 text-xs rounded-xl pl-9 pr-3 py-2.5 border border-slate-200"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -458,9 +457,7 @@ export const Header: React.FC<HeaderProps> = () => {
             <button
               onClick={() => handleNavigation('home', 'about-section')}
               className="block w-full text-left px-3.5 py-2.5 rounded-xl text-slate-800 font-bold hover:bg-indigo-50 text-xs"
-            >
-              Company About
-            </button>
+            >{t("Company About")}</button>
             <button
               onClick={() => handleNavigation('home', 'contact-section')}
               className="block w-full text-left px-3.5 py-2.5 rounded-xl text-slate-800 font-bold hover:bg-indigo-50 text-xs"
@@ -473,21 +470,16 @@ export const Header: React.FC<HeaderProps> = () => {
                 <button
                   onClick={() => handleNavigation(getDashboardPage())}
                   className="block w-full text-left px-3.5 py-2.5 rounded-xl text-indigo-700 font-bold bg-indigo-50 text-xs"
-                >
-                  Dashboard ({currentUser.name})
+                >{t("Dashboard (")}{currentUser.name})
                 </button>
                 <button
                   onClick={() => handleNavigation('profile')}
                   className="block w-full text-left px-3.5 py-2.5 rounded-xl text-slate-800 font-bold hover:bg-indigo-50 text-xs"
-                >
-                  👤 My Profile & Account Settings
-                </button>
+                >{t("👤 My Profile & Account Settings")}</button>
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left px-3.5 py-2.5 rounded-xl text-rose-600 font-bold hover:bg-rose-50 text-xs"
-                >
-                  🚪 Logout
-                </button>
+                >{t("🚪 Logout")}</button>
               </div>
             ) : (
               <div className="pt-2 border-t border-slate-100 flex items-center gap-2">

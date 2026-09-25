@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { hashPassword } from '../utils/passwords';
+import { useApp } from '../context/useApp';
 import { Logo } from '../components/Logo';
 import { UserRole, LanguageCode } from '../types';
 import { User as UserIcon, Store, ArrowRight, Loader2 } from 'lucide-react';
-import { loginWithGoogleFirebase } from '../firebase';
+
 
 export const Signup: React.FC = () => {
-  const { themeMode, t, categories, addUser, addShop, setActivePage, users, setCurrentUser, setCurrentRole } = useApp();
+  const { themeMode, t, language, categories, addUser, addShop, setActivePage, users, setCurrentUser, setCurrentRole } = useApp();
 
+  const [saving, setSaving] = useState(false);
   const [accountType, setAccountType] = useState<UserRole>('customer');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -22,8 +24,8 @@ export const Signup: React.FC = () => {
   const [pincode, setPincode] = useState('');
   const [state, setState] = useState('Andhra Pradesh');
   const [country] = useState('India');
-  const [prefLang, setPrefLang] = useState<LanguageCode>('en');
-  const [acceptTerms, setAcceptTerms] = useState(true);
+  const [prefLang, setPrefLang] = useState<LanguageCode>(language);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Shop Info Fields
   const [shopName, setShopName] = useState('');
@@ -45,6 +47,7 @@ export const Signup: React.FC = () => {
     setIsGoogleLoading(true);
     setErrorMsg('');
     try {
+      const { loginWithGoogleFirebase } = await import('../firebase');
       const res = await loginWithGoogleFirebase();
       const googleUser = res.user;
 
@@ -54,6 +57,7 @@ export const Signup: React.FC = () => {
       const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
       if (existingUser) {
+        if (existingUser.status === 'blocked') { setErrorMsg(t('accountBlocked')); return; }
         setCurrentUser(existingUser);
         setCurrentRole(existingUser.role);
         if (existingUser.role === 'admin') setActivePage('admin-dashboard');
@@ -64,9 +68,9 @@ export const Signup: React.FC = () => {
           name,
           email,
           mobile: googleUser.phoneNumber || mobile || '',
-          address: address || 'Google Authenticated User',
-          villageTownCity: city || 'Vijayawada',
-          pincode: pincode || '520001',
+          address,
+          villageTownCity: city,
+          pincode,
           state: 'Andhra Pradesh',
           country: 'India',
           language: prefLang,
@@ -74,25 +78,6 @@ export const Signup: React.FC = () => {
           status: 'active'
         });
 
-        if (accountType === 'shop_owner') {
-          addShop({
-            ownerId: newUser.id,
-            businessName: shopName.trim() || `${name}'s Store`,
-            categoryId: categoryId || 'cat_grocery',
-            address: businessAddress || address || 'Main Market Road',
-            pincode: businessPincode || pincode || '520001',
-            state: businessState || state || 'Andhra Pradesh',
-            phone: shopMobile || mobile || googleUser.phoneNumber || '9876543210',
-            email: shopEmail || email,
-            description: description || `${shopName || name + "'s Store"} offering products & services.`,
-            openingTime: openingTime || '08:00 AM',
-            closingTime: closingTime || '09:00 PM',
-            gstNumber,
-            whatsappNumber: whatsappNumber || shopMobile || mobile || '',
-            rating: 5.0,
-            reviewCount: 1
-          });
-        }
 
         setCurrentUser(newUser);
         setCurrentRole(accountType);
@@ -117,7 +102,7 @@ export const Signup: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -130,10 +115,19 @@ export const Signup: React.FC = () => {
       return;
     }
 
+    if (users.some(u => u.email.toLowerCase() === email.trim().toLowerCase() || u.mobile === mobile.trim())) {
+      setErrorMsg(t('accountExists')); return;
+    }
+    if (password.length < 8) { setErrorMsg(t('passwordLength')); return; }
+    if (saving) return;
+    setSaving(true);
+    const passwordHash = await hashPassword(password).catch(() => null);
+    if (!passwordHash) { setErrorMsg(t('saveFailed')); setSaving(false); return; }
     const createdUser = addUser({
-      name: fullName,
-      email,
-      mobile,
+      password: passwordHash,
+      name: fullName.trim(),
+      email: email.trim(),
+      mobile: mobile.trim(),
       address,
       villageTownCity: city,
       pincode,
@@ -180,9 +174,7 @@ export const Signup: React.FC = () => {
           themeMode === 'dark'
             ? 'bg-emerald-950/90 text-amber-400 border-emerald-700/50'
             : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-        }`}>
-          Join Nexvarya Platform
-        </span>
+        }`}>{t("Join Nexvarya Platform")}</span>
         <h1 className={`text-3xl sm:text-4xl font-black tracking-tight ${
           themeMode === 'dark' ? 'text-white' : 'text-slate-900'
         }`}>
@@ -190,9 +182,7 @@ export const Signup: React.FC = () => {
         </h1>
         <p className={`text-xs max-w-md mx-auto ${
           themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'
-        }`}>
-          Register as a Customer to shop or as a Shop Owner to digitize your local business
-        </p>
+        }`}>{t("Register as a Customer to shop or as a Shop Owner to digitize your local business")}</p>
       </div>
 
       {/* Account Type Selector Tabs */}
@@ -270,11 +260,9 @@ export const Signup: React.FC = () => {
               />
             </svg>
           )}
-          <span>Sign up with Google (Gmail)</span>
+          <span>{t("Sign up with Google (Gmail)")}</span>
         </button>
-        <p className="text-[11px] text-slate-400 text-center">
-          Fast 1-click registration using your Gmail account
-        </p>
+        <p className="text-[11px] text-slate-400 text-center">{t("Fast 1-click registration using your Gmail account")}</p>
       </div>
 
       {/* Registration Form */}
@@ -289,8 +277,8 @@ export const Signup: React.FC = () => {
         {/* Section 1: Basic Personal User Information */}
         <div className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 border-b border-emerald-900/50 pb-2 flex items-center justify-between">
-            <span>1. Personal Details</span>
-            <span className="text-[10px] text-slate-400 normal-case font-normal">Step 1 of {accountType === 'shop_owner' ? '2' : '1'}</span>
+            <span>{t("1. Personal Details")}</span>
+            <span className="text-[10px] text-slate-400 normal-case font-normal">{t("Step 1 of")}{accountType === 'shop_owner' ? '2' : '1'}</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -311,6 +299,7 @@ export const Signup: React.FC = () => {
               <input
                 type="tel"
                 required
+                inputMode="tel" pattern="[0-9]{10}" maxLength={10}
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
                 placeholder="Enter Mobile Number"
@@ -347,6 +336,7 @@ export const Signup: React.FC = () => {
               <input
                 type="password"
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -385,6 +375,7 @@ export const Signup: React.FC = () => {
               <input
                 type="text"
                 required
+                inputMode="numeric" pattern="[0-9]{6}" maxLength={6}
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value)}
                 placeholder="520001"
@@ -394,15 +385,21 @@ export const Signup: React.FC = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="text-xs text-slate-300">{t('villageTownCity')} *<input required value={city} onChange={e => setCity(e.target.value)} className="block w-full mt-2 bg-slate-950 border border-slate-800 rounded-xl p-3" /></label>
+          <label className="text-xs text-slate-300">{t('state')} *<input required value={state} onChange={e => setState(e.target.value)} className="block w-full mt-2 bg-slate-950 border border-slate-800 rounded-xl p-3" /></label>
+        </div>
         {/* Section 2: Shop / Business Information */}
         {accountType === 'shop_owner' && (
           <div className="space-y-4 pt-4 border-t border-slate-800 animate-in fade-in">
             <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 border-b border-emerald-900/50 pb-2 flex items-center justify-between">
               <span>2. {t('shopDetails')}</span>
-              <span className="text-[10px] text-amber-400/80 font-normal">Business Information</span>
+              <span className="text-[10px] text-amber-400/80 font-normal">{t("Business Information")}</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<label className="text-xs text-slate-300">{t('businessPincode')}<input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={businessPincode} onChange={e => setBusinessPincode(e.target.value)} className="block w-full mt-2 bg-slate-950 border border-slate-800 rounded-xl p-3" /></label>
+              <label className="text-xs text-slate-300">{t('businessState')}<input value={businessState} onChange={e => setBusinessState(e.target.value)} className="block w-full mt-2 bg-slate-950 border border-slate-800 rounded-xl p-3" /></label>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-300">{t('shopName')} *</label>
                 <input
@@ -513,7 +510,7 @@ export const Signup: React.FC = () => {
 
         {/* Submit Button */}
         <button
-          type="submit"
+          type="submit" disabled={saving}
           className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
         >
           <span>{t('createAccount')}</span>

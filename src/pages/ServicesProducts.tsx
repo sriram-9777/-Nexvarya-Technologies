@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { canPurchase } from '../utils/commerce';
+import { useApp } from '../context/useApp';
 import { Search, Tag, ShoppingBag, Store, ArrowRight, Check } from 'lucide-react';
 
 export const ServicesProducts: React.FC = () => {
@@ -14,14 +15,14 @@ export const ServicesProducts: React.FC = () => {
 
   const filteredProducts = products.filter(product => {
     const shop = shops.find(s => s.id === product.shopId);
-    if (!shop || shop.status !== 'approved') return false;
+    if (!product.isAvailable || product.productStatus === 'disabled' || !shop || shop.status !== 'approved') return false;
 
     if (selectedCategory !== 'all' && product.categoryId !== selectedCategory) {
       return false;
     }
 
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.trim().toLowerCase();
       const matchName = product.name.toLowerCase().includes(q);
       const matchDesc = product.description.toLowerCase().includes(q);
       const matchShop = shop.businessName.toLowerCase().includes(q);
@@ -33,7 +34,7 @@ export const ServicesProducts: React.FC = () => {
 
   const handleAddToCart = (product: any) => {
     const shop = shops.find(s => s.id === product.shopId);
-    if (shop) {
+    if (shop && canPurchase(product, shop)) {
       addToCart(product, shop, 1);
       setAddedSuccessId(product.id);
       setTimeout(() => setAddedSuccessId(null), 2000);
@@ -50,12 +51,10 @@ export const ServicesProducts: React.FC = () => {
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-900/50 pb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-serif">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-heading">
             {t('servicesProducts')}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Browse items, products, and services listed across all local businesses
-          </p>
+          <p className="text-xs text-slate-400 mt-1">{t("Browse items, products, and services listed across all local businesses")}</p>
         </div>
 
         <div className="relative w-full md:w-80">
@@ -110,7 +109,7 @@ export const ServicesProducts: React.FC = () => {
       {filteredProducts.length === 0 ? (
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 shadow-xl">
           <Tag className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-300">No items found matching your criteria.</p>
+          <p className="text-sm font-medium text-slate-300">{t("No items found matching your criteria.")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -125,7 +124,7 @@ export const ServicesProducts: React.FC = () => {
                 <div className="space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-bold text-white text-base group-hover:text-amber-400 transition-colors font-serif">
+                      <h3 className="font-bold text-white text-base group-hover:text-amber-400 transition-colors font-heading">
                         {product.name}
                       </h3>
                       {shop && (
@@ -156,7 +155,7 @@ export const ServicesProducts: React.FC = () => {
                   {product.enableBulkDiscount && (
                     <div className="flex items-center gap-1.5 text-[11px] text-amber-300 font-bold bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/50">
                       <Tag className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Bulk Order Discounts Available</span>
+                      <span>{t("Bulk Order Discounts Available")}</span>
                     </div>
                   )}
                 </div>
@@ -167,13 +166,13 @@ export const ServicesProducts: React.FC = () => {
                       onClick={() => handleGoToShop(shop.id)}
                       className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
                     >
-                      <span>View Shop</span>
+                      <span>{t("View Shop")}</span>
                       <ArrowRight className="w-3 h-3 text-amber-400" />
                     </button>
                   )}
 
                   <button
-                    onClick={() => handleAddToCart(product)}
+                    disabled={!canPurchase(product, shop)} onClick={() => handleAddToCart(product)}
                     className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-md ${
                       addedSuccessId === product.id
                         ? 'bg-emerald-600 text-white'
@@ -183,7 +182,7 @@ export const ServicesProducts: React.FC = () => {
                     {addedSuccessId === product.id ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-amber-300" />
-                        <span>Added!</span>
+                        <span>{t("Added!")}</span>
                       </>
                     ) : (
                       <>

@@ -1,87 +1,30 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   LanguageCode, User, UserRole, Shop, Product, Category, 
-  CartItem, Order, OrderStatus, BulkDiscountTier 
+  CartItem, Order, OrderStatus
 } from '../types';
 import { 
   initialCategories, initialUsers, initialShops, 
   initialProducts, initialOrders 
 } from '../data/mockData';
+import { readRoute, pages } from '../utils/navigation';
 import { translations } from '../data/translations';
-import { checkBackendHealth, apiUsers, apiShops, apiProducts, apiOrders } from '../api';
+import { calculateBulkUnitPrice, makeCartItem, reconcileCart, money } from '../utils/commerce';
+import { readStored, saveStored, readPreference, savePreference } from '../utils/storage';
 
-export type ThemeMode = 'dark' | 'light';
-
-interface AppContextType {
-  themeMode: ThemeMode;
-  setThemeMode: (theme: ThemeMode) => void;
-  toggleThemeMode: () => void;
-
-  language: LanguageCode;
-  setLanguage: (lang: LanguageCode) => void;
-  t: (key: string) => string;
-  
-  currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
-  currentRole: UserRole;
-  setCurrentRole: (role: UserRole) => void;
-  
-  users: User[];
-  addUser: (user: Omit<User, 'id' | 'createdAt'>) => User;
-  updateUser: (userId: string, userData: Partial<User>) => void;
-  updateUserStatus: (userId: string, status: 'active' | 'blocked') => void;
-
-  shops: Shop[];
-  addShop: (shopData: Omit<Shop, 'id' | 'status' | 'isOpen'>) => Shop;
-  updateShop: (shopId: string, shopData: Partial<Shop>) => void;
-  updateShopStatus: (shopId: string, status: 'pending' | 'approved' | 'blocked') => void;
-  toggleShopOpenStatus: (shopId: string) => void;
-  myShop: Shop | undefined;
-
-  products: Product[];
-  addProduct: (productData: Omit<Product, 'id'>) => void;
-  updateProduct: (productId: string, productData: Partial<Product>) => void;
-  deleteProduct: (productId: string) => void;
-
-  categories: Category[];
-  addCategory: (categoryData: Omit<Category, 'id'>) => void;
-
-  cart: CartItem[];
-  addToCart: (product: Product, shop: Shop, qty?: number) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  clearCart: () => void;
-  calculateBulkUnitPrice: (product: Product, quantity: number) => { effectivePrice: number; savingsPerUnit: number; discountText?: string };
-
-  orders: Order[];
-  placeOrder: (notes?: string) => Order | null;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-
-  activePage: string;
-  setActivePage: (page: string) => void;
-  selectedShopId: string | null;
-  setSelectedShopId: (id: string | null) => void;
-  selectedCategory: string;
-  setSelectedCategory: (catId: string) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  showDemoBar: boolean;
-  setShowDemoBar: (show: boolean) => void;
-  toggleDemoBar: () => void;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
+import { AppContext } from './useApp';
+import type { ThemeMode } from './useApp';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 0. Theme Mode State (Dark / Light)
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('nexvarya_theme');
-    return (saved as ThemeMode) || 'dark';
+    const saved = readPreference('nexvarya_theme', 'dark');
+    return saved === 'light' ? 'light' : 'dark';
   });
 
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
-    localStorage.setItem('nexvarya_theme', mode);
+    savePreference('nexvarya_theme', mode);
   };
 
   const toggleThemeMode = () => {
@@ -97,41 +40,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 1. Language state
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('nexvarya_lang') as LanguageCode) || 'en';
+    return readPreference('nexvarya_lang', 'en') === 'te' ? 'te' : 'en';
   });
 
   const setLanguage = (lang: LanguageCode) => {
     setLanguageState(lang);
-    localStorage.setItem('nexvarya_lang', lang);
+    savePreference('nexvarya_lang', lang);
   };
+
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
 
   const t = (key: string): string => {
     return translations[language]?.[key] || translations['en']?.[key] || key;
   };
 
-  const DEMO_SHOP_IDS = ['shop_1', 'shop_2', 'shop_3', 'shop_4', 'shop_5', 'shop_6', 'shop_7'];
-  const DEMO_USER_IDS = ['user_cust_1', 'user_owner_1', 'user_admin_1'];
 
   // 2. User & Role state
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('nexvarya_users');
-    if (saved) {
-      try {
-        const parsed: User[] = JSON.parse(saved);
-        if (parsed && parsed.length > 0) return parsed;
-      } catch (e) {}
-    }
-    return initialUsers;
-  });
+  const [users, setUsers] = useState<User[]>(() => readStored('nexvarya_users', initialUsers));
 
   const [currentUser, setCurrentUserState] = useState<User | null>(() => {
-    const saved = localStorage.getItem('nexvarya_current_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return null;
+    const saved = readStored<User | null>('nexvarya_current_user', null);
+    return users.find(u => u.id === saved?.id && u.status === 'active') || null;
   });
 
   const [currentRole, setCurrentRoleState] = useState<UserRole>(() => {
@@ -139,85 +68,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const setCurrentUser = (user: User | null) => {
+    if (user?.status === 'blocked') return;
     setCurrentUserState(user);
+    if (user?.language) setLanguage(user.language);
     if (user) {
       setCurrentRoleState(user.role);
-      localStorage.setItem('nexvarya_current_user', JSON.stringify(user));
+      const { password: _password, ...session } = user;
+      saveStored('nexvarya_current_user', session);
     } else {
       setCurrentRoleState('customer');
-      localStorage.removeItem('nexvarya_current_user');
+      saveStored('nexvarya_current_user', null);
     }
   };
 
   const setCurrentRole = (role: UserRole) => {
-    setCurrentRoleState(role);
-    if (currentUser) {
-      const updated = { ...currentUser, role };
-      setCurrentUserState(updated);
-      setUsers(prev => prev.map(u => u.id === currentUser.id ? updated : u));
-      localStorage.setItem('nexvarya_current_user', JSON.stringify(updated));
-    }
+    // A display preference must never mutate an account's permissions.
+    setCurrentRoleState(currentUser?.role || role);
   };
 
   useEffect(() => {
-    localStorage.setItem('nexvarya_users', JSON.stringify(users));
+    saveStored('nexvarya_users', users);
   }, [users]);
 
   const addUser = (userData: Omit<User, 'id' | 'createdAt'>): User => {
     const newUser: User = {
       ...userData,
-      id: 'user_' + Date.now(),
+      id: 'user_' + crypto.randomUUID(),
       createdAt: new Date().toISOString().split('T')[0]
     };
     setUsers(prev => [newUser, ...prev]);
     setCurrentUser(newUser);
     setCurrentRoleState(newUser.role);
-    localStorage.setItem('nexvarya_current_user', JSON.stringify(newUser));
     return newUser;
   };
 
   const updateUser = (userId: string, userData: Partial<User>) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        const updated = { ...u, ...userData };
-        if (currentUser?.id === userId) {
-          setCurrentUser(updated);
-          localStorage.setItem('nexvarya_current_user', JSON.stringify(updated));
-        }
-        return updated;
-      }
-      return u;
-    }));
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...userData, id: u.id } : u));
+    if (currentUser?.id === userId) setCurrentUser({ ...currentUser, ...userData, id: userId });
   };
 
   const updateUserStatus = (userId: string, status: 'active' | 'blocked') => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, status } : u));
+    if (currentUser?.id === userId && status === 'blocked') setCurrentUser(null);
   };
 
   // 3. Shop State
-  const [shops, setShops] = useState<Shop[]>(() => {
-    const saved = localStorage.getItem('nexvarya_shops');
-    if (saved) {
-      try {
-        const parsed: Shop[] = JSON.parse(saved);
-        if (parsed && parsed.length > 0) return parsed;
-      } catch (e) {}
-    }
-    return initialShops;
-  });
+  const [shops, setShops] = useState<Shop[]>(() => readStored('nexvarya_shops', initialShops));
 
   useEffect(() => {
-    localStorage.setItem('nexvarya_shops', JSON.stringify(shops));
+    saveStored('nexvarya_shops', shops);
   }, [shops]);
 
   const addShop = (shopData: Omit<Shop, 'id' | 'status' | 'isOpen'>): Shop => {
     const newShop: Shop = {
       ...shopData,
-      id: 'shop_' + Date.now(),
-      status: 'approved',
-      isOpen: true,
-      rating: 5.0,
-      reviewCount: 1
+      id: 'shop_' + crypto.randomUUID(),
+      status: 'pending',
+      isOpen: false,
+      rating: 0,
+      reviewCount: 0
     };
     setShops(prev => [newShop, ...prev]);
     return newShop;
@@ -232,7 +141,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleShopOpenStatus = (shopId: string) => {
-    setShops(prev => prev.map(s => s.id === shopId ? { ...s, isOpen: !s.isOpen } : s));
+    setShops(prev => prev.map(s => s.id === shopId && s.status === 'approved' ? { ...s, isOpen: !s.isOpen } : s));
   };
 
   const myShop = currentUser?.role === 'shop_owner' 
@@ -240,25 +149,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     : undefined;
 
   // 4. Products State
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('nexvarya_products');
-    if (saved) {
-      try {
-        const parsed: Product[] = JSON.parse(saved);
-        if (parsed && parsed.length > 0) return parsed;
-      } catch (e) {}
-    }
-    return initialProducts;
-  });
+  const [products, setProducts] = useState<Product[]>(() => readStored('nexvarya_products', initialProducts));
 
   useEffect(() => {
-    localStorage.setItem('nexvarya_products', JSON.stringify(products));
+    saveStored('nexvarya_products', products);
   }, [products]);
 
   const addProduct = (productData: Omit<Product, 'id'>) => {
     const newProduct: Product = {
       ...productData,
-      id: 'prod_' + Date.now()
+      id: 'prod_' + crypto.randomUUID()
     };
     setProducts(prev => [newProduct, ...prev]);
   };
@@ -272,114 +172,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 5. Categories State
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('nexvarya_categories');
-    return saved ? JSON.parse(saved) : initialCategories;
-  });
+  const [categories, setCategories] = useState<Category[]>(() => readStored('nexvarya_categories', initialCategories));
 
   const addCategory = (categoryData: Omit<Category, 'id'>) => {
     const newCat: Category = {
       ...categoryData,
-      id: 'cat_' + Date.now()
+      id: 'cat_' + crypto.randomUUID()
     };
     setCategories(prev => [...prev, newCat]);
   };
 
-  // 6. Bulk Discount Logic Engine
-  const calculateBulkUnitPrice = (product: Product, quantity: number) => {
-    if (!product.enableBulkDiscount || !product.bulkDiscounts || product.bulkDiscounts.length === 0) {
-      return { effectivePrice: product.price, savingsPerUnit: 0 };
-    }
-
-    // Find applicable tier based on quantity
-    let matchedTier: BulkDiscountTier | null = null;
-
-    for (const tier of product.bulkDiscounts) {
-      if (quantity >= tier.minQty) {
-        if (tier.maxQty === null || quantity <= tier.maxQty) {
-          matchedTier = tier;
-          break;
-        }
-      }
-    }
-
-    if (!matchedTier) {
-      return { effectivePrice: product.price, savingsPerUnit: 0 };
-    }
-
-    let effectivePrice = product.price;
-    if (matchedTier.discountType === 'fixed_price') {
-      effectivePrice = matchedTier.discountValue;
-    } else if (matchedTier.discountType === 'percentage') {
-      const discountAmount = (product.price * matchedTier.discountValue) / 100;
-      effectivePrice = product.price - discountAmount;
-    }
-
-    const savingsPerUnit = Math.max(0, product.price - effectivePrice);
-    const discountText = matchedTier.discountType === 'fixed_price'
-      ? `₹${effectivePrice}/${product.sellingType.toUpperCase()}`
-      : `${matchedTier.discountValue}% OFF`;
-
-    return { effectivePrice, savingsPerUnit, discountText };
-  };
+  useEffect(() => { saveStored('nexvarya_categories', categories); }, [categories]);
 
   // 7. Cart State
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('nexvarya_cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [storedCart, setCart] = useState<CartItem[]>(() => reconcileCart(readStored('nexvarya_cart', []), products, shops));
+
+  const cart = useMemo(() => reconcileCart(storedCart, products, shops), [storedCart, products, shops]);
 
   useEffect(() => {
-    localStorage.setItem('nexvarya_cart', JSON.stringify(cart));
+    saveStored('nexvarya_cart', cart);
   }, [cart]);
 
-  const addToCart = (product: Product, shop: Shop, qtyToAdd: number = 1) => {
+
+
+  const addToCart = (product: Product, shop: Shop, qtyToAdd = 1) => {
+    if (!Number.isFinite(qtyToAdd) || qtyToAdd <= 0) return;
     setCart(prev => {
-      const existingIndex = prev.findIndex(item => item.product.id === product.id);
-      let newQty = qtyToAdd;
-      if (existingIndex > -1) {
-        newQty += prev[existingIndex].quantity;
-      }
-
-      const { effectivePrice, savingsPerUnit } = calculateBulkUnitPrice(product, newQty);
-      const newItem: CartItem = {
-        product,
-        shop,
-        quantity: newQty,
-        effectiveUnitPrice: effectivePrice,
-        savingsPerUnit: savingsPerUnit,
-        totalPrice: effectivePrice * newQty
-      };
-
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex] = newItem;
-        return updated;
-      } else {
-        return [...prev, newItem];
-      }
+      const latest = products.find(p => p.id === product.id);
+      const currentShop = shops.find(s => s.id === shop.id);
+      if (!latest || !currentShop) return prev;
+      const existing = prev.find(item => item.product.id === product.id);
+      const item = makeCartItem(latest, currentShop, (existing?.quantity || 0) + qtyToAdd);
+      return item ? [...prev.filter(i => i.product.id !== product.id), item] : prev;
     });
   };
 
-  const updateCartQuantity = (productId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-
-    setCart(prev => prev.map(item => {
-      if (item.product.id === productId) {
-        const { effectivePrice, savingsPerUnit } = calculateBulkUnitPrice(item.product, newQuantity);
-        return {
-          ...item,
-          quantity: newQuantity,
-          effectiveUnitPrice: effectivePrice,
-          savingsPerUnit: savingsPerUnit,
-          totalPrice: effectivePrice * newQuantity
-        };
-      }
-      return item;
-    }));
+  const updateCartQuantity = (productId: string, quantity: number) => {
+    if (!Number.isFinite(quantity)) return;
+    setCart(prev => reconcileCart(prev.map(item => item.product.id === productId ? { ...item, quantity } : item), products, shops));
   };
 
   const removeFromCart = (productId: string) => {
@@ -391,53 +221,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 8. Orders State
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('nexvarya_orders');
-    if (saved) {
-      try {
-        const parsed: Order[] = JSON.parse(saved);
-        if (parsed) return parsed;
-      } catch (e) {}
-    }
-    return initialOrders;
-  });
+  const [orders, setOrders] = useState<Order[]>(() => readStored('nexvarya_orders', initialOrders));
 
   useEffect(() => {
-    localStorage.setItem('nexvarya_orders', JSON.stringify(orders));
+    saveStored('nexvarya_orders', orders);
   }, [orders]);
 
-  // 9. Live Backend Data Synchronization Effect
-  useEffect(() => {
-    const syncFromBackend = async () => {
-      try {
-        const isOnline = await checkBackendHealth();
-        if (isOnline) {
-          const [fetchedProducts, fetchedShops, fetchedUsers, fetchedOrders] = await Promise.all([
-            apiProducts.getAll().catch(() => null),
-            apiShops.getAll().catch(() => null),
-            apiUsers.getAll().catch(() => null),
-            apiOrders.getAll().catch(() => null)
-          ]);
-
-          if (fetchedProducts && Array.isArray(fetchedProducts) && fetchedProducts.length > 0) {
-            setProducts(fetchedProducts);
-          }
-          if (fetchedShops && Array.isArray(fetchedShops) && fetchedShops.length > 0) {
-            setShops(fetchedShops);
-          }
-          if (fetchedUsers && Array.isArray(fetchedUsers) && fetchedUsers.length > 0) {
-            setUsers(fetchedUsers);
-          }
-          if (fetchedOrders && Array.isArray(fetchedOrders) && fetchedOrders.length > 0) {
-            setOrders(fetchedOrders);
-          }
-        }
-      } catch (e) {
-        // Safe fallback to initialized mock state
-      }
-    };
-    syncFromBackend();
-  }, []);
+  // Directory, account and order changes are persisted in this browser.
+  // A remote data adapter must support reads AND writes before replacing this store.
 
   // Helper: Collision-Resistant Order ID Generator
   const generateOrderId = (): string => {
@@ -447,11 +238,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const placeOrder = (notes?: string): Order | null => {
-    if (cart.length === 0 || !currentUser) return null;
+    if (cart.length === 0 || !currentUser || currentUser.status !== 'active') return null;
+    const checkedCart = reconcileCart(cart, products, shops);
+    if (checkedCart.length !== cart.length) { setCart(checkedCart); return null; }
 
     // Multi-Shop Cart Splitting (Audit Item #7)
     const shopGroups: Record<string, CartItem[]> = {};
-    cart.forEach(item => {
+    checkedCart.forEach(item => {
       const shopId = item.shop.id;
       if (!shopGroups[shopId]) shopGroups[shopId] = [];
       shopGroups[shopId].push(item);
@@ -463,9 +256,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const shopItems = shopGroups[shopId];
       const targetShop = shopItems[0].shop;
 
-      const subtotal = shopItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-      const totalAmount = shopItems.reduce((sum, item) => sum + item.totalPrice, 0);
-      const discountTotal = subtotal - totalAmount;
+      const subtotal = money(shopItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0));
+      const totalAmount = money(shopItems.reduce((sum, item) => sum + item.totalPrice, 0));
+      const discountTotal = money(subtotal - totalAmount);
 
       const newOrder: Order = {
         id: generateOrderId(), // Collision-Resistant ID (Audit Item #6)
@@ -492,7 +285,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         discountTotal,
         totalAmount,
         status: 'pending',
-        createdAt: new Date().toLocaleString('en-US', { hour12: false }),
+        createdAt: new Date().toISOString(),
         notes
       };
 
@@ -500,16 +293,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setOrders(prev => [...createdOrders, ...prev]);
+    setProducts(prev => prev.map(product => {
+      const item = checkedCart.find(i => i.product.id === product.id);
+      if (!item || product.stockQuantity === undefined) return product;
+      const stockQuantity = Math.max(0, product.stockQuantity - item.quantity);
+      return { ...product, stockQuantity, stockStatus: stockQuantity === 0 ? 'out_of_stock' : product.stockStatus };
+    }));
     clearCart();
     return createdOrders[0] || null;
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order || (currentUser?.role !== 'admin' && !shops.some(s => s.id === order.shopId && s.ownerId === currentUser?.id))) return;
+    const transitions: Record<OrderStatus, OrderStatus[]> = { pending: ['accepted','rejected'], accepted: ['processing','rejected'], processing: ['ready','rejected'], ready: ['completed'], completed: [], rejected: [] };
+    if (!transitions[order.status].includes(status)) return;
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+    if (status === 'rejected') setProducts(prev => prev.map(product => {
+      const item = order.items.find(i => i.productId === product.id);
+      if (!item || product.stockQuantity === undefined) return product;
+      return { ...product, stockQuantity: product.stockQuantity + item.quantity, stockStatus: 'in_stock' };
+    }));
   };
 
   // Navigation & Search State
-  const [selectedShopId, setSelectedShopId] = useState<string | null>(() => {
+  const [selectedShopId, setSelectedShopIdState] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       return params.get('shop');
@@ -517,23 +325,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return null;
   });
 
-  const [activePage, setActivePage] = useState<string>(() => {
+  const [activePage, setActivePageState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('shop')) return 'shop-detail';
+      return readRoute(params.toString()).page;
     }
     return 'home';
   });
 
+  const shopIdRef = useRef(selectedShopId);
+  const setSelectedShopId = (id: string | null) => { shopIdRef.current = id; setSelectedShopIdState(id); };
+  const setActivePage = (page: string) => {
+    const next = pages.includes(page) ? page : 'home';
+    const url = new URL(window.location.href);
+    url.searchParams.delete('shop');
+    url.searchParams.delete('page');
+    if (next === 'shop-detail' && shopIdRef.current) url.searchParams.set('shop', shopIdRef.current);
+    else if (next !== 'home') url.searchParams.set('page', next);
+    if (url.href !== window.location.href) window.history.pushState({}, '', url);
+    setActivePageState(next);
+    window.scrollTo({ top: 0 });
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handlePopState = () => {
-        const params = new URLSearchParams(window.location.search);
-        const shopParam = params.get('shop');
-        if (shopParam) {
-          setSelectedShopId(shopParam);
-          setActivePage('shop-detail');
-        }
+        const route = readRoute(window.location.search);
+        setSelectedShopId(route.shop);
+        setActivePageState(route.page);
       };
       window.addEventListener('popstate', handlePopState);
       return () => window.removeEventListener('popstate', handlePopState);
@@ -566,10 +385,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {children}
     </AppContext.Provider>
   );
-};
-
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) throw new Error('useApp must be used within AppProvider');
-  return context;
 };

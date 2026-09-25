@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { Store, Search, MapPin, Star, ArrowRight } from 'lucide-react';
 
 export const Businesses: React.FC = () => {
@@ -18,17 +18,18 @@ export const Businesses: React.FC = () => {
   const filteredShops = shops.filter(shop => {
     if (shop.status !== 'approved') return false;
 
-    if (selectedCategory !== 'all' && shop.categoryId !== selectedCategory) {
+    if (selectedCategory !== 'all' && shop.categoryId !== selectedCategory && !products.some(p => p.shopId === shop.id && p.categoryId === selectedCategory && p.isAvailable && p.productStatus !== 'disabled')) {
       return false;
     }
 
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.trim().toLowerCase();
       const matchName = shop.businessName.toLowerCase().includes(q);
       const matchAddress = shop.address.toLowerCase().includes(q);
       const matchPincode = shop.pincode.includes(q);
       const matchDesc = shop.description.toLowerCase().includes(q);
-      return matchName || matchAddress || matchPincode || matchDesc;
+      const matchProduct = products.some(p => p.shopId === shop.id && p.isAvailable && p.productStatus !== 'disabled' && `${p.name} ${p.description}`.toLowerCase().includes(q));
+      return matchName || matchAddress || matchPincode || matchDesc || matchProduct;
     }
 
     return true;
@@ -51,9 +52,7 @@ export const Businesses: React.FC = () => {
           </h1>
           <p className={`text-xs mt-1 ${
             themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'
-          }`}>
-            Discover verified local shops, stores, and services in your town or area
-          </p>
+          }`}>{t("Discover verified local shops, stores, and services in your town or area")}</p>
         </div>
 
         {/* Search input */}
@@ -89,7 +88,7 @@ export const Businesses: React.FC = () => {
         </button>
 
         {categories.map((cat) => {
-          const count = shops.filter(s => s.status === 'approved' && s.categoryId === cat.id).length;
+          const count = shops.filter(s => s.status === 'approved' && (s.categoryId === cat.id || products.some(p => p.shopId === s.id && p.categoryId === cat.id && p.isAvailable && p.productStatus !== 'disabled'))).length;
           return (
             <button
               key={cat.id}
@@ -119,10 +118,8 @@ export const Businesses: React.FC = () => {
           themeMode === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
         }`}>
           <Store className="w-12 h-12 text-emerald-500 mx-auto" />
-          <h3 className={`text-base font-bold ${themeMode === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>No businesses found</h3>
-          <p className="text-xs max-w-sm mx-auto">
-            Try adjusting your search terms or clearing category filters to explore more local shops.
-          </p>
+          <h3 className={`text-base font-bold ${themeMode === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>{t("No businesses found")}</h3>
+          <p className="text-xs max-w-sm mx-auto">{t("Try adjusting your search terms or clearing category filters to explore more local shops.")}</p>
           <button
             onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
             className={`px-4 py-2 text-xs font-semibold rounded-xl border ${
@@ -130,9 +127,7 @@ export const Businesses: React.FC = () => {
                 ? 'bg-slate-800 hover:bg-slate-700 text-emerald-400 border-emerald-900/60'
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
             }`}
-          >
-            Reset Filters
-          </button>
+          >{t("Reset Filters")}</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,7 +201,7 @@ export const Businesses: React.FC = () => {
                 <div className={`p-4 border-t flex items-center justify-between ${
                   themeMode === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-100'
                 }`}>
-                  <span className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{itemsCount} Products/Services</span>
+                  <span className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{itemsCount}{t("Products/Services")}</span>
                   <button
                     onClick={() => handleShopClick(shop.id)}
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all"

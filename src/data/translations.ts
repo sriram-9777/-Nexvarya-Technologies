@@ -1,7 +1,9 @@
-import { LanguageCode } from '../types';
+import type { LanguageCode } from '../types/index.ts';
+import { uiEnglish, uiTelugu } from './uiTranslations.ts';
 
 export const translations: Record<LanguageCode, Record<string, string>> = {
   en: {
+    ...uiEnglish,
     // Header & Brand
     platformName: "Nexvarya Platform",
     tagline: "Multi-Business Directory & E-Commerce",
@@ -201,6 +203,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     unit_other: "Other"
   },
   te: {
+    ...uiTelugu,
     // Header & Brand
     platformName: "నెక్స్‌వర్యా ప్లాట్‌ఫారమ్",
     tagline: "మల్టీ-బిజినెస్ డైరెక్టరీ & ఇ-కామర్స్",

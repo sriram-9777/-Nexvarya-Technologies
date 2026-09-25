@@ -2,6 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      try {
+        const theme = localStorage.getItem('nexvarya_theme') === 'light' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.classList.add(theme);
+        document.documentElement.lang = localStorage.getItem('nexvarya_lang') === 'te' ? 'te' : 'en';
+      } catch { document.documentElement.dataset.theme = 'dark'; }
+    </script>
     <link rel="icon" type="image/png" href="/nexvarya_brand_logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexvarya Technologies - Multi-Business Platform</title>

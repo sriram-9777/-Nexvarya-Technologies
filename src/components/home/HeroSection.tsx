@@ -1,6 +1,6 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
-import { Sparkles, ArrowRight, Store, Phone, Mail, Clock, MapPin, Building2, Shield, Award, Users, Cpu } from 'lucide-react';
+import { useApp } from '../../context/useApp';
+import { Sparkles, ArrowRight, Store, Phone, Mail, Clock, MapPin, Building2 } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
   const { themeMode, t, setActivePage } = useApp();
@@ -24,24 +24,18 @@ export const HeroSection: React.FC = () => {
             : 'bg-white/90 border-emerald-200/80 text-slate-900'
         }`}>
           <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-          <span className="text-xs font-extrabold tracking-wide">
-            Official Platform of <strong className="text-emerald-500 font-black">Nexvarya Technologies</strong>
+          <span className="text-xs font-extrabold tracking-wide">{t("Official Platform of")}<strong className="text-emerald-500 font-black">Nexvarya Technologies</strong>
           </span>
         </div>
 
         {/* Hero Main Headline */}
         <div className="space-y-4 max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-            LOCAL BUSINESSES.<br />
-            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 bg-clip-text text-transparent">
-              SMARTER CONNECTIONS.
-            </span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">{t("LOCAL BUSINESSES.")}<br />
+            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 bg-clip-text text-transparent">{t("SMARTER CONNECTIONS.")}</span>
           </h1>
           <p className={`text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed font-bold ${
             themeMode === 'dark' ? 'text-slate-300' : 'text-slate-600'
-          }`}>
-            One premier platform connecting local customers with verified local businesses & merchants.
-          </p>
+          }`}>{t("One premier platform connecting local customers with verified local businesses & merchants.")}</p>
           
           {/* Hero Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -75,16 +69,14 @@ export const HeroSection: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4 border-emerald-500/20">
             <div className="flex items-center gap-3">
               <Building2 className="w-6 h-6 text-emerald-500" />
-              <span className="font-extrabold text-sm tracking-wide">Nexvarya Technologies Corporate Desk</span>
+              <span className="font-extrabold text-sm tracking-wide">{t("Nexvarya Technologies Corporate Desk")}</span>
             </div>
-            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              Verified Enterprise Partner
-            </span>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{t("Verified Enterprise Partner")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Phone & WhatsApp</span>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Phone & WhatsApp")}</span>
               <a href="tel:+919494300868" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors">
                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
                 <span>+91 94943 00868</span>
@@ -92,7 +84,7 @@ export const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Corporate Email</span>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Corporate Email")}</span>
               <a href="mailto:ramachandraphani8@gmail.com" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors truncate">
                 <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span className="truncate">ramachandraphani8@gmail.com</span>
@@ -100,7 +92,7 @@ export const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Business Hours</span>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Business Hours")}</span>
               <div className="text-xs font-black flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-emerald-500" />
                 <span>08:00 AM – 09:00 PM</span>
@@ -108,10 +100,10 @@ export const HeroSection: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Location HQ</span>
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Location HQ")}</span>
               <div className="text-xs font-black flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Andhra Pradesh, India</span>
+                <span>{t("Andhra Pradesh, India")}</span>
               </div>
             </div>
           </div>

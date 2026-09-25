@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { apiAccess } from './access.js';
 
 import { User } from './models/User.js';
 import { Shop } from './models/Shop.js';
@@ -34,41 +35,8 @@ const generateCollisionResistantOrderId = () => {
   return `ORD-${timestamp}-${randomHex}`;
 };
 
-// 🔒 Authentication & Authorization Middleware
-const authenticateUser = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    req.user = null;
-    return next();
-  }
-  
-  const token = authHeader.replace('Bearer ', '');
-  try {
-    const user = await User.findOne({ id: token });
-    req.user = user || null;
-  } catch (e) {
-    req.user = null;
-  }
-  next();
-};
-
-app.use(authenticateUser);
-
-const requireAuth = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Unauthorized. Authentication token required.' });
-  }
-  next();
-};
-
-const requireRole = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden. Insufficient permissions for this action.' });
-    }
-    next();
-  };
-};
+// Never accept a public user ID as an authentication credential.
+app.use(apiAccess(process.env.API_MANAGEMENT_KEY));
 
 // 🏥 Health Check Endpoint (Secured: No DB URI Exposure)
 app.get('/api/health', (req, res) => {
@@ -82,7 +50,7 @@ app.get('/api/health', (req, res) => {
 // 👤 USERS ENDPOINTS
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -96,7 +64,8 @@ app.post('/api/users', async (req, res) => {
       id: req.body.id || 'user_' + Date.now()
     });
     await newUser.save();
-    res.status(201).json(newUser);
+    const { password: _password, ...publicUser } = newUser.toObject();
+    res.status(201).json(publicUser);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -106,10 +75,13 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const updated = await User.findOneAndUpdate(
       { id: req.params.id },
-      { $set: req.body },
-      { new: true }
+      { $set: Object.fromEntries(Object.entries(req.body).filter(([key]) => !['id', '_id', '__v'].includes(key))) },
+      { new: true, runValidators: true }
     );
-    res.json(updated);
+    if (!updated) return res.status(404).json({ error: 'Record not found.' });
+    const record = updated.toObject();
+    delete record.password;
+    res.json(record);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -118,7 +90,7 @@ app.put('/api/users/:id', async (req, res) => {
 // 🏪 SHOPS ENDPOINTS
 app.get('/api/shops', async (req, res) => {
   try {
-    const shops = await Shop.find().sort({ createdAt: -1 });
+    const shops = await Shop.find(req.isManagement ? {} : { status: 'approved' }).sort({ createdAt: -1 });
     res.json(shops);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -143,7 +115,7 @@ app.put('/api/shops/:id', async (req, res) => {
     const updated = await Shop.findOneAndUpdate(
       { id: req.params.id },
       { $set: req.body },
-      { new: true }
+      { new: true, runValidators: true }
     );
     res.json(updated);
   } catch (err) {
@@ -154,7 +126,8 @@ app.put('/api/shops/:id', async (req, res) => {
 // 📦 PRODUCTS ENDPOINTS
 app.get('/api/products', async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const approvedShops = await Shop.find({ status: 'approved' }).select('id');
+    const products = await Product.find(req.isManagement ? {} : { shopId: { $in: approvedShops.map(shop => shop.id) }, isAvailable: true, productStatus: { $ne: 'disabled' } }).sort({ createdAt: -1 });
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -179,7 +152,7 @@ app.put('/api/products/:id', async (req, res) => {
     const updated = await Product.findOneAndUpdate(
       { id: req.params.id },
       { $set: req.body },
-      { new: true }
+      { new: true, runValidators: true }
     );
     res.json(updated);
   } catch (err) {
@@ -224,7 +197,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
     const updated = await Order.findOneAndUpdate(
       { id: req.params.id },
       { $set: { status: req.body.status } },
-      { new: true }
+      { new: true, runValidators: true }
     );
     res.json(updated);
   } catch (err) {

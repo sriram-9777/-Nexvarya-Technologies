@@ -1,24 +1,28 @@
 import React from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { UserRole } from '../types';
 import { User, Store, Sparkles } from 'lucide-react';
 
 export const RoleSwitcher: React.FC = () => {
-  const { currentRole, setCurrentRole, t, setActivePage } = useApp();
+  const { currentRole, users, setCurrentUser, t, setActivePage } = useApp();
 
   const handleRoleChange = (role: UserRole) => {
-    setCurrentRole(role);
+    if (!import.meta.env.DEV) return;
+    const ids = { customer: 'user_customer_1', shop_owner: 'user_shop_1', admin: 'user_admin' };
+    const demoUser = users.find(user => user.id === ids[role] && user.status === 'active');
+    if (!demoUser) return;
+    setCurrentUser(demoUser);
     if (role === 'admin') setActivePage('admin-dashboard');
     else if (role === 'shop_owner') setActivePage('shop-dashboard');
     else setActivePage('customer-dashboard');
   };
 
   return (
-    <div className="bg-gradient-to-r from-emerald-950 via-slate-950 to-amber-950 text-slate-200 text-xs py-1.5 px-4 border-b border-emerald-900/50 flex flex-wrap items-center justify-between gap-2 shadow-md">
+    <div className="theme-inverse bg-gradient-to-r from-emerald-950 via-slate-950 to-amber-950 text-slate-200 text-xs py-1.5 px-4 border-b border-emerald-900/50 flex flex-wrap items-center justify-between gap-2 shadow-md">
       <div className="flex items-center gap-2 font-medium">
         <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-        <span className="text-amber-400 font-bold font-serif">{t('demoRoleSwitcher')}</span>
-        <span className="hidden sm:inline text-slate-400">| Nexvarya Platform Preview</span>
+        <span className="text-amber-400 font-bold font-heading">{t('demoRoleSwitcher')}</span>
+        <span className="hidden sm:inline text-slate-400">{t("| Nexvarya Platform Preview")}</span>
       </div>
 
       <div className="flex items-center gap-1.5 bg-slate-900/90 p-0.5 rounded-lg border border-emerald-900/40 shadow-sm backdrop-blur-md">
@@ -45,6 +49,7 @@ export const RoleSwitcher: React.FC = () => {
           <Store className="w-3.5 h-3.5 text-emerald-400" />
           <span>{t('viewAsShopOwner')}</span>
         </button>
+        <button onClick={() => handleRoleChange('admin')} className="px-2.5 py-1 text-amber-300">{t('viewAsAdmin')}</button>
       </div>
     </div>
   );

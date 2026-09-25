@@ -1,3 +1,5 @@
+import { useDialog } from '../utils/useDialog';
+import { useApp } from '../context/useApp';
 import React, { useState } from 'react';
 import { Shop } from '../types';
 import { X, Printer, QrCode, Store, Sparkles, MessageSquare, ExternalLink, Copy, Check } from 'lucide-react';
@@ -14,6 +16,8 @@ interface QrPosterModalProps {
 }
 
 export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) => {
+  const { t } = useApp();
+  const dialogRef = useDialog(onClose);
   const [qrMode, setQrMode] = useState<'whatsapp' | 'catalog'>('whatsapp');
   const [copied, setCopied] = useState(false);
 
@@ -29,21 +33,21 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
     window.print();
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(targetUrl);
+  const handleCopyLink = async () => {
+    try { await navigator.clipboard.writeText(targetUrl); } catch { return; }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('Storefront QR Code & Poster')} className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-slate-900 border border-emerald-900/40 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 text-white my-auto">
         
         {/* Modal Controls Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-emerald-900/50 bg-slate-950 print:hidden">
           <div className="flex items-center gap-2">
             <QrCode className="w-5 h-5 text-amber-400" />
-            <h3 className="font-bold text-white text-sm font-serif">Storefront QR Code & Poster</h3>
+            <h3 className="font-bold text-white text-sm font-heading">{t("Storefront QR Code & Poster")}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -55,9 +59,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
 
         {/* QR Mode Selector Tabs (WhatsApp vs Web Catalog) */}
         <div className="px-6 pt-4 pb-2 bg-slate-900 print:hidden space-y-2">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Select Scannable QR Code Type:
-          </span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{t("Select Scannable QR Code Type:")}</span>
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-2xl border border-slate-800">
             <button
               type="button"
@@ -69,7 +71,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-              <span>WhatsApp Chat QR</span>
+              <span>{t("WhatsApp Chat QR")}</span>
             </button>
             <button
               type="button"
@@ -81,7 +83,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
               }`}
             >
               <Store className="w-3.5 h-3.5" />
-              <span>Online Catalog QR</span>
+              <span>{t("Online Catalog QR")}</span>
             </button>
           </div>
         </div>
@@ -95,7 +97,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
           </div>
 
           <div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-1 font-serif">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-1 font-heading">
               {shop.businessName}
             </h1>
             <p className="text-xs text-amber-300 font-bold">{shop.address}, PIN: {shop.pincode}</p>
@@ -127,7 +129,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
 
           <div className="pt-2 border-t border-slate-800 text-slate-400 text-xs flex items-center justify-center gap-1.5 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span>Powered by <strong className="text-amber-400 font-extrabold font-serif">Nexvarya Technologies</strong></span>
+            <span>{t("Powered by")}<strong className="text-amber-400 font-extrabold font-heading">Nexvarya Technologies</strong></span>
           </div>
 
         </div>
@@ -152,7 +154,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
               title="Test QR Link in Browser"
             >
               <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Test Link</span>
+              <span>{t("Test Link")}</span>
             </a>
           </div>
 
@@ -160,15 +162,13 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
             <button
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800 text-xs font-semibold"
-            >
-              Close
-            </button>
+            >{t("Close")}</button>
             <button
               onClick={handlePrint}
               className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 transition-all hover:scale-[1.01]"
             >
               <Printer className="w-4 h-4 text-amber-300" />
-              <span>Print Store Poster</span>
+              <span>{t("Print Store Poster")}</span>
             </button>
           </div>
         </div>

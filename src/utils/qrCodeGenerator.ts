@@ -18,6 +18,11 @@ export function getQrCodeFallbackUrl(data: string, size = 350): string {
 /**
  * Generates a WhatsApp Direct Chat URL for a shop
  */
+export function normalizePhone(phone: string): string {
+  let digits = phone.replace(/\D/g, '').replace(/^0/, '');
+  return digits.length === 10 ? `91${digits}` : digits;
+}
+
 export function getShopWhatsAppUrl(phone: string | undefined, businessName: string): string {
   if (!phone) return 'https://wa.me/';
   let clean = phone.replace(/\D/g, '');
@@ -36,5 +41,6 @@ export function getShopWhatsAppUrl(phone: string | undefined, businessName: stri
  */
 export function getShopCatalogUrl(shopId: string): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://nexvarya.com';
-  return `${origin}/?shop=${encodeURIComponent(shopId)}`;
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  return `${origin}${path}?shop=${encodeURIComponent(shopId)}`;
 }

@@ -1,5 +1,7 @@
+import { normalizePhone } from '../utils/qrCodeGenerator';
 import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { canPurchase } from '../utils/commerce';
+import { useApp } from '../context/useApp';
 import { 
   MapPin, Phone, Clock, 
   Tag, ShoppingBag, Plus, Minus, Check, ArrowLeft,
@@ -8,40 +10,40 @@ import {
 
 export const ShopDetail: React.FC = () => {
   const { 
-    selectedShopId, shops, products, categories, t, 
+    selectedShopId, shops, products, categories, t, language,
     calculateBulkUnitPrice, addToCart, setActivePage 
   } = useApp();
 
   const shop = shops.find(s => s.id === selectedShopId) || (selectedShopId ? undefined : shops[0]);
-  const shopProducts = shop ? products.filter(p => p.shopId === shop.id) : [];
+  const shopProducts = shop ? products.filter(p => p.shopId === shop.id && p.productStatus !== 'disabled') : [];
   const category = shop ? categories.find(c => c.id === shop.categoryId) : undefined;
 
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [addedSuccessId, setAddedSuccessId] = useState<string | null>(null);
 
-  if (!shop) {
+  if (!shop || shop.status !== 'approved') {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center space-y-4">
-        <h2 className="text-xl font-bold">Business Not Found</h2>
-        <p className="text-xs text-slate-400">The business you are trying to view is not available or has been updated.</p>
+        <h2 className="text-xl font-bold">{t("Business Not Found")}</h2>
+        <p className="text-xs text-slate-400">{t("The business you are trying to view is not available or has been updated.")}</p>
         <button
           onClick={() => setActivePage('businesses')}
           className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-md"
-        >
-          Browse Verified Businesses
-        </button>
+        >{t("Browse Verified Businesses")}</button>
       </div>
     );
   }
 
-  const getQuantity = (productId: string) => quantities[productId] || 1;
+  const getQuantity = (productId: string) => quantities[productId] || products.find(p => p.id === productId)?.minOrderQuantity || 1;
 
   const setQuantity = (productId: string, val: number) => {
-    if (val < 1) return;
+    const product = products.find(p => p.id === productId);
+    if (!product || !Number.isFinite(val) || val < (product.minOrderQuantity || 1) || val > (product.stockQuantity ?? Infinity)) return;
     setQuantities(prev => ({ ...prev, [productId]: val }));
   };
 
   const handleAddToCart = (product: any) => {
+    if (!canPurchase(product, shop)) return;
     const qty = getQuantity(product.id);
     addToCart(product, shop, qty);
     setAddedSuccessId(product.id);
@@ -49,14 +51,14 @@ export const ShopDetail: React.FC = () => {
   };
 
   const handleDirectWhatsApp = (product: any) => {
-    if (!shop.whatsappNumber) return;
+    if (!shop.whatsappNumber || !canPurchase(product, shop)) return;
     const qty = getQuantity(product.id);
     const { effectivePrice } = calculateBulkUnitPrice(product, qty);
     const total = effectivePrice * qty;
 
     const text = `Hi ${shop.businessName}, I would like to order:\n\n*Product:* ${product.name}\n*Quantity:* ${qty} ${product.sellingType.toUpperCase()}\n*Rate:* ₹${effectivePrice}/${product.sellingType.toUpperCase()}\n*Total Amount:* ₹${total}`;
-    const url = `https://wa.me/${shop.whatsappNumber}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const url = `https://wa.me/${normalizePhone(shop.whatsappNumber)}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -68,22 +70,22 @@ export const ShopDetail: React.FC = () => {
         className="flex items-center gap-2 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to Businesses Directory</span>
+        <span>{t("Back to Businesses Directory")}</span>
       </button>
 
       {/* Shop Profile Banner */}
-      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-emerald-800/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden backdrop-blur-md">
+      <div className="theme-inverse bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-emerald-800/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden backdrop-blur-md">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-amber-300 border border-emerald-400/40 flex items-center justify-center font-black text-2xl sm:text-3xl shadow-lg shrink-0 font-serif">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 text-amber-300 border border-emerald-400/40 flex items-center justify-center font-black text-2xl sm:text-3xl shadow-lg shrink-0 font-heading">
               {shop.businessName.charAt(0)}
             </div>
 
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-serif">
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-heading">
                   {shop.businessName}
                 </h1>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
@@ -94,7 +96,7 @@ export const ShopDetail: React.FC = () => {
               </div>
 
               <span className="inline-block text-xs font-bold text-amber-300 bg-amber-950/80 px-3 py-1 rounded-lg border border-amber-700/50">
-                {category?.name || 'Business'}
+                {(language === 'te' ? category?.nameTe : category?.name) || t('businesses')}
               </span>
 
               <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
@@ -126,7 +128,7 @@ export const ShopDetail: React.FC = () => {
                 className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold flex items-center justify-center gap-1.5 transition-all text-xs shadow-md shadow-emerald-950/50"
               >
                 <MessageCircle className="w-4 h-4 text-amber-300" />
-                <span>Chat on WhatsApp</span>
+                <span>{t("Chat on WhatsApp")}</span>
               </a>
             )}
           </div>
@@ -137,22 +139,19 @@ export const ShopDetail: React.FC = () => {
       {/* Catalog Title */}
       <div className="border-b border-emerald-900/50 pb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight font-serif flex items-center gap-2">
+          <h2 className="text-xl font-bold text-white tracking-tight font-heading flex items-center gap-2">
             <span>{t('productsAndServices')}</span>
             <span className="text-xs font-sans text-amber-400 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800/60">
-              {shopProducts.length} items
-            </span>
+              {shopProducts.length}{t("items")}</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Select items and configure quantities to unlock automatic bulk savings
-          </p>
+          <p className="text-xs text-slate-400 mt-1">{t("Select items and configure quantities to unlock automatic bulk savings")}</p>
         </div>
       </div>
 
       {/* Product Catalog Grid */}
       {shopProducts.length === 0 ? (
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
-          <p className="text-sm font-medium">No items currently listed for this business.</p>
+          <p className="text-sm font-medium">{t("No items currently listed for this business.")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -169,12 +168,12 @@ export const ShopDetail: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-white text-base font-serif">{product.name}</h3>
+                      <h3 className="font-bold text-white text-base font-heading">{product.name}</h3>
                       <p className="text-xs text-slate-300 mt-1 leading-relaxed">{product.description}</p>
                     </div>
 
                     <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border ${
-                      product.stockStatus === 'in_stock' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700/60' : 'bg-rose-950/90 text-rose-300 border-rose-700/60'
+                      canPurchase(product, shop) ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700/60' : 'bg-rose-950/90 text-rose-300 border-rose-700/60'
                     }`}>
                       {product.stockStatus === 'in_stock' ? t('available') : t('outOfStock')}
                     </span>
@@ -226,11 +225,11 @@ export const ShopDetail: React.FC = () => {
                 {/* Interactive Quantity Selector & Cart Actions */}
                 <div className="pt-3 border-t border-slate-800/80 space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400 font-medium">Configure Quantity:</span>
+                    <span className="text-slate-400 font-medium">{t("Configure Quantity:")}</span>
                     
                     <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1">
                       <button
-                        onClick={() => setQuantity(product.id, qty - 1)}
+                        aria-label={t('decreaseQuantity')} onClick={() => setQuantity(product.id, qty - 1)}
                         className="text-slate-400 hover:text-white p-0.5"
                       >
                         <Minus className="w-3.5 h-3.5" />
@@ -239,7 +238,7 @@ export const ShopDetail: React.FC = () => {
                         {qty} {t(`unit_${product.sellingType}`)}
                       </span>
                       <button
-                        onClick={() => setQuantity(product.id, qty + 1)}
+                        aria-label={t('increaseQuantity')} onClick={() => setQuantity(product.id, qty + 1)}
                         className="text-slate-400 hover:text-white p-0.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -250,15 +249,14 @@ export const ShopDetail: React.FC = () => {
                   {/* Calculated Price & Savings Banner */}
                   <div className="bg-slate-950 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-800">
                     <div>
-                      <span className="text-slate-400 block text-[10px]">Calculated Total</span>
+                      <span className="text-slate-400 block text-[10px]">{t("Calculated Total")}</span>
                       <span className="text-lg font-black text-amber-400">
-                        ₹{totalPrice.toFixed(0)}
+                        ₹{totalPrice.toFixed(2)}
                       </span>
                     </div>
 
                     {savingsPerUnit > 0 && (
-                      <span className="bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 px-2.5 py-1 rounded-lg font-bold text-[11px]">
-                        Saved ₹{(savingsPerUnit * qty).toFixed(0)}!
+                      <span className="bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 px-2.5 py-1 rounded-lg font-bold text-[11px]">{t("Saved ₹")}{(savingsPerUnit * qty).toFixed(2)}!
                       </span>
                     )}
                   </div>
@@ -266,11 +264,11 @@ export const ShopDetail: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleAddToCart(product)}
-                      disabled={product.stockStatus === 'out_of_stock'}
+                      disabled={!canPurchase(product, shop)}
                       className={`py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md ${
                         addedSuccessId === product.id
                           ? 'bg-emerald-600 text-white'
-                          : product.stockStatus === 'out_of_stock'
+                          : !canPurchase(product, shop)
                           ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                           : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white shadow-emerald-950/60'
                       }`}
@@ -278,7 +276,7 @@ export const ShopDetail: React.FC = () => {
                       {addedSuccessId === product.id ? (
                         <>
                           <Check className="w-4 h-4 text-amber-300" />
-                          <span>Added to Cart!</span>
+                          <span>{t("Added to Cart!")}</span>
                         </>
                       ) : (
                         <>
