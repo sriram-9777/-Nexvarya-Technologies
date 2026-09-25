@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { Logo } from '../components/Logo';
 import { Lock, Mail, ArrowRight, Loader2, User as UserIcon, Store } from 'lucide-react';
 import { loginWithGoogleFirebase } from '../firebase';
 import { UserRole } from '../types';
@@ -122,17 +123,9 @@ export const Login: React.FC = () => {
       themeMode === 'dark' ? 'bg-[#020617] text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
       
-      <div className="text-center space-y-2">
-        <div className={`inline-flex items-center justify-center p-2 rounded-2xl border shadow-md mb-2 ${
-          themeMode === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <img 
-            src="/nexvarya_logo.jpg" 
-            alt="Nexvarya Logo" 
-            className="w-12 h-12 rounded-xl object-cover"
-          />
-        </div>
-        <h1 className={`text-2xl font-extrabold tracking-tight ${themeMode === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>{t('login')}</h1>
+      <div className="text-center space-y-3 flex flex-col items-center">
+        <Logo size="lg" variant={themeMode === 'dark' ? 'light' : 'dark'} />
+        <h1 className={`text-2xl font-extrabold tracking-tight pt-2 ${themeMode === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>{t('login')}</h1>
         <p className={`text-xs ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
           Access your Nexvarya Customer or Shop Owner Dashboard
         </p>

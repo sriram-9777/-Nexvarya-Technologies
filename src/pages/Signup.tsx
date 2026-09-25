@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { Logo } from '../components/Logo';
 import { UserRole, LanguageCode } from '../types';
 import { User as UserIcon, Store, ArrowRight, Loader2 } from 'lucide-react';
 import { loginWithGoogleFirebase } from '../firebase';
@@ -173,7 +174,8 @@ export const Signup: React.FC = () => {
       themeMode === 'dark' ? 'bg-[#020617] text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
       
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-3 flex flex-col items-center">
+        <Logo size="lg" variant={themeMode === 'dark' ? 'light' : 'dark'} />
         <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border shadow-sm ${
           themeMode === 'dark'
             ? 'bg-emerald-950/90 text-amber-400 border-emerald-700/50'
