@@ -40,7 +40,7 @@ export const CustomerDashboard: React.FC = () => {
           </h1>
           <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
             <MapPin className="w-4 h-4 text-emerald-400" />
-            <span>{t("📍 Your Location:")}{currentUser?.villageTownCity || 'Vijayawada'}, PIN: {currentUser?.pincode || '520001'}</span>
+            <span>{t("📍 Your Location:")} {currentUser?.villageTownCity || currentUser?.address || 'Address not provided'}{currentUser?.pincode ? `, PIN: ${currentUser.pincode}` : ''}</span>
           </div>
         </div>
 

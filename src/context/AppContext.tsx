@@ -11,6 +11,7 @@ import { readRoute, pages } from '../utils/navigation';
 import { translations } from '../data/translations';
 import { calculateBulkUnitPrice, makeCartItem, reconcileCart, money } from '../utils/commerce';
 import { readStored, saveStored, readPreference, savePreference } from '../utils/storage';
+import { apiProducts, apiShops } from '../api';
 
 import { AppContext } from './useApp';
 import type { ThemeMode } from './useApp';
@@ -114,6 +115,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 3. Shop State
   const [shops, setShops] = useState<Shop[]>(() => readStored('nexvarya_shops', initialShops));
+
+  // Prefer approved cloud data when the backend is available, while retaining
+  // the local catalogue as an offline fallback.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([apiShops.getAll(), apiProducts.getAll()])
+      .then(([remoteShops, remoteProducts]) => {
+        if (cancelled) return;
+        if (Array.isArray(remoteShops) && remoteShops.length) setShops(remoteShops);
+        if (Array.isArray(remoteProducts) && remoteProducts.length) setProducts(remoteProducts);
+      })
+      .catch(() => {
+        // Keep the local cached catalogue when the API is unavailable.
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     saveStored('nexvarya_shops', shops);

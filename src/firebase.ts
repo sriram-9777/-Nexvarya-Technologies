@@ -21,6 +21,7 @@ googleProvider.setCustomParameters({
 
 export interface GoogleAuthUser {
   email: string | null;
+  emailVerified: boolean;
   displayName: string | null;
   phoneNumber?: string | null;
   photoURL?: string | null;
@@ -33,7 +34,8 @@ export const loginWithGoogleFirebase = async (): Promise<{ user: GoogleAuthUser 
   const result = await signInWithPopup(auth, googleProvider);
   return {
     user: {
-      email: result.user.email,
+    email: result.user.email,
+      emailVerified: result.user.emailVerified,
       displayName: result.user.displayName,
       phoneNumber: result.user.phoneNumber,
       photoURL: result.user.photoURL

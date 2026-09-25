@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Local development uses the Express server. Vercel must receive the API URL
+// through VITE_API_BASE_URL; never ship a browser build pointing at localhost.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
 async function request(url: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) });

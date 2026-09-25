@@ -6,6 +6,8 @@ import { Lock, Mail, ArrowRight, Loader2, User as UserIcon, Store } from 'lucide
 
 import { UserRole } from '../types';
 
+const ADMIN_EMAIL = 'sriram.pinnamaneni9@gmail.com';
+
 export const Login: React.FC = () => {
   const { themeMode, t, users, setCurrentUser, setCurrentRole, setActivePage, addUser, updateUser } = useApp();
   const [loginRole, setLoginRole] = useState<UserRole>('customer');
@@ -56,13 +58,23 @@ export const Login: React.FC = () => {
 
       if (existingUser) {
         if (existingUser.status === 'blocked') { setErrorMsg(t('accountBlocked')); return; }
-        const targetRole = existingUser.role;
-        const userToLogin = existingUser;
+        const isVerifiedAdmin = email.toLowerCase() === ADMIN_EMAIL && googleUser.emailVerified;
+        if (email.toLowerCase() === ADMIN_EMAIL && !googleUser.emailVerified) {
+          setErrorMsg('Admin access requires a verified email address. Verify your email in Google, then sign in again.');
+          return;
+        }
+        const targetRole = isVerifiedAdmin ? 'admin' : existingUser.role;
+        const userToLogin = isVerifiedAdmin ? { ...existingUser, role: 'admin' as const } : existingUser;
         setCurrentUser(userToLogin);
         if (targetRole === 'admin') setActivePage('admin-dashboard');
         else if (targetRole === 'shop_owner') setActivePage('shop-dashboard');
         else setActivePage('customer-dashboard');
       } else {
+        if (email.toLowerCase() === ADMIN_EMAIL && !googleUser.emailVerified) {
+          setErrorMsg('Admin access requires a verified email address. Verify your email in Google, then sign in again.');
+          return;
+        }
+        const accountRole = email.toLowerCase() === ADMIN_EMAIL ? 'admin' : loginRole;
         const newUser = addUser({
           name,
           email,
@@ -73,14 +85,15 @@ export const Login: React.FC = () => {
           state: 'Andhra Pradesh',
           country: 'India',
           language: 'en',
-          role: loginRole,
+          role: accountRole,
           status: 'active'
         });
 
 
         setCurrentUser(newUser);
-        setCurrentRole(loginRole);
-        if (loginRole === 'shop_owner') setActivePage('shop-dashboard');
+        setCurrentRole(accountRole);
+        if (accountRole === 'admin') setActivePage('admin-dashboard');
+        else if (accountRole === 'shop_owner') setActivePage('shop-dashboard');
         else setActivePage('customer-dashboard');
       }
     } catch (err: any) {
@@ -92,7 +105,7 @@ export const Login: React.FC = () => {
       ) {
         setErrorMsg('Firebase API Key not configured yet. Please update VITE_FIREBASE_API_KEY in .env or src/firebase.ts with your Firebase credentials.');
       } else if (err?.code === 'auth/unauthorized-domain') {
-        setErrorMsg('Domain unauthorized in Firebase. Please add "sriram-9777.github.io" under Firebase Console ➔ Authentication ➔ Settings ➔ Authorized Domains.');
+        setErrorMsg(`This deployment domain is not authorized in Firebase. Add "${window.location.hostname}" under Firebase Console → Authentication → Settings → Authorized Domains.`);
       } else if (err?.code === 'auth/popup-closed-by-user') {
         setErrorMsg('Google login popup was closed before completing sign in.');
       } else {
@@ -255,4 +268,3 @@ export const Login: React.FC = () => {
     </div>
   );
 };
-
