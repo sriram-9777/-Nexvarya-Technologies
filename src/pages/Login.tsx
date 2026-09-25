@@ -108,6 +108,8 @@ export const Login: React.FC = () => {
         err?.message?.includes('apiKey')
       ) {
         setErrorMsg('Firebase API Key not configured yet. Please update VITE_FIREBASE_API_KEY in .env or src/firebase.ts with your Firebase credentials.');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        setErrorMsg('Domain unauthorized in Firebase. Please add "sriram-9777.github.io" under Firebase Console ➔ Authentication ➔ Settings ➔ Authorized Domains.');
       } else if (err?.code === 'auth/popup-closed-by-user') {
         setErrorMsg('Google login popup was closed before completing sign in.');
       } else {
