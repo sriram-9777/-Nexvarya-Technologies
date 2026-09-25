@@ -18,9 +18,9 @@ export const Signup: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [address, setAddress] = useState('');
-  const [city] = useState('Vijayawada');
-  const [pincode, setPincode] = useState('520001');
-  const [state] = useState('Andhra Pradesh');
+  const [city, setCity] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [state, setState] = useState('Andhra Pradesh');
   const [country] = useState('India');
   const [prefLang, setPrefLang] = useState<LanguageCode>('en');
   const [acceptTerms, setAcceptTerms] = useState(true);
@@ -29,8 +29,8 @@ export const Signup: React.FC = () => {
   const [shopName, setShopName] = useState('');
   const [categoryId, setCategoryId] = useState('cat_grocery');
   const [businessAddress, setBusinessAddress] = useState('');
-  const [businessPincode] = useState('520001');
-  const [businessState] = useState('Andhra Pradesh');
+  const [businessPincode, setBusinessPincode] = useState('');
+  const [businessState, setBusinessState] = useState('Andhra Pradesh');
   const [shopMobile] = useState('');
   const [shopEmail] = useState('');
   const [description, setDescription] = useState('');

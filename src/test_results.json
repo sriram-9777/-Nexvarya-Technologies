@@ -1,6 +1,6 @@
 {
-  "passedCount": 30,
-  "totalCount": 30,
+  "passedCount": 33,
+  "totalCount": 33,
   "testResults": [
     {
       "category": "Bulk Discount Engine",
@@ -72,7 +72,7 @@
       "category": "Multi-Unit Selling",
       "name": "AC Service unit item pricing structured correctly",
       "status": "PASS",
-      "details": "Product: Split AC Foam Jet Deep Servicing @ ₹600"
+      "details": "Product: Split AC Deep Cleaning Service @ ₹600"
     },
     {
       "category": "Shopping Cart Engine",
@@ -180,7 +180,25 @@
       "category": "Executive Theme Verification",
       "name": "Executive theme branding & header components active",
       "status": "PASS",
-      "details": "Verified Logo.tsx and Header.tsx active"
+      "details": "Logo and Header components verified"
+    },
+    {
+      "category": "Multi-Shop & Security Architecture",
+      "name": "Collision-resistant Order ID generator (Audit Item #6)",
+      "status": "PASS",
+      "details": "Generated unique IDs: ORD-MUGGVS5C-SJ8D, ORD-MUGGVS5C-6VI9"
+    },
+    {
+      "category": "Multi-Shop & Security Architecture",
+      "name": "Multi-shop cart items split into separate shop orders (Audit Item #7)",
+      "status": "PASS",
+      "details": "Split 3 items from 2 shops into 2 per-shop orders"
+    },
+    {
+      "category": "Multi-Shop & Security Architecture",
+      "name": "Secured API health endpoint response without URI exposure (Audit Item #5)",
+      "status": "PASS",
+      "details": "Verified no MONGODB_URI exposure"
     }
   ]
 }

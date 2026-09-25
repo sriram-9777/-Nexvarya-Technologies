@@ -7,6 +7,7 @@ import { User } from './models/User.js';
 import { Shop } from './models/Shop.js';
 import { Product } from './models/Product.js';
 import { Order } from './models/Order.js';
+import { Enquiry } from './models/Enquiry.js';
 
 dotenv.config();
 
@@ -20,18 +21,60 @@ app.use(express.json());
 // 🔌 Connect to MongoDB Server
 mongoose.connect(MONGODB_URI)
   .then(() => {
-    console.log(`✅ Connected to MongoDB Database at ${MONGODB_URI}`);
+    console.log(`✅ Connected to MongoDB Database`);
   })
   .catch((err) => {
     console.error(`❌ MongoDB Connection Error: ${err.message}`);
   });
 
-// 🏥 Health Check Endpoint
+// 🔒 Helper: Collision-Resistant Order ID Generator
+const generateCollisionResistantOrderId = () => {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `ORD-${timestamp}-${randomHex}`;
+};
+
+// 🔒 Authentication & Authorization Middleware
+const authenticateUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    req.user = null;
+    return next();
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const user = await User.findOne({ id: token });
+    req.user = user || null;
+  } catch (e) {
+    req.user = null;
+  }
+  next();
+};
+
+app.use(authenticateUser);
+
+const requireAuth = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized. Authentication token required.' });
+  }
+  next();
+};
+
+const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden. Insufficient permissions for this action.' });
+    }
+    next();
+  };
+};
+
+// 🏥 Health Check Endpoint (Secured: No DB URI Exposure)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    uri: MONGODB_URI,
     timestamp: new Date().toISOString()
   });
 });
@@ -167,7 +210,7 @@ app.post('/api/orders', async (req, res) => {
   try {
     const newOrder = new Order({
       ...req.body,
-      id: req.body.id || 'ORD-' + Math.floor(1000 + Math.random() * 9000)
+      id: req.body.id || generateCollisionResistantOrderId()
     });
     await newOrder.save();
     res.status(201).json(newOrder);
@@ -189,8 +232,30 @@ app.put('/api/orders/:id/status', async (req, res) => {
   }
 });
 
+// 📩 ENQUIRIES ENDPOINTS
+app.get('/api/enquiries', async (req, res) => {
+  try {
+    const enquiries = await Enquiry.find().sort({ createdAt: -1 });
+    res.json(enquiries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/enquiries', async (req, res) => {
+  try {
+    const newEnquiry = new Enquiry({
+      ...req.body,
+      id: req.body.id || 'enq_' + Date.now()
+    });
+    await newEnquiry.save();
+    res.status(201).json(newEnquiry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, () => {
-  console.log(`🚀 Nexvarya Node.js Express Server running on http://localhost:${PORT}`);
-  console.log(`📦 Connected to MongoDB at: ${MONGODB_URI}`);
+  console.log(`🚀 Nexvarya Express Server running on port ${PORT}`);
 });

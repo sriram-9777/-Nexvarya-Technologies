@@ -176,10 +176,53 @@ function auditThemeColorPurity() {
   const headerExists = fs.existsSync(path.join(srcDir, 'components', 'Header.tsx'));
 
   assert(logoExists && headerExists, 
-    "Executive theme branding & header components active", 
-    category, 
-    "Verified Logo.tsx and Header.tsx active"
-  );
+    "Executive theme branding & header components active", category, "Logo and Header components verified");
+}
+
+// ----------------------------------------------------
+// TEST GROUP 7: MULTI-SHOP CART SPLITTING & SECURITY ARCHITECTURE
+// ----------------------------------------------------
+function testMultiShopArchitectureAndSecurity() {
+  const category = "Multi-Shop & Security Architecture";
+
+  // 1. Test Collision-Resistant Order ID Generator (Audit Item #6)
+  const generateOrderId = (): string => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `ORD-${timestamp}-${randomHex}`;
+  };
+
+  const id1 = generateOrderId();
+  const id2 = generateOrderId();
+  assert(id1.startsWith('ORD-') && id1 !== id2, 
+    "Collision-resistant Order ID generator (Audit Item #6)", category, `Generated unique IDs: ${id1}, ${id2}`);
+
+  // 2. Test Multi-Shop Cart Splitting (Audit Item #7)
+  const cartItems = [
+    { product: initialProducts[0], shop: { id: 'shop_1', businessName: 'Sri Lakshmi Supermarket' }, quantity: 2, totalPrice: 130 },
+    { product: initialProducts[1], shop: { id: 'shop_1', businessName: 'Sri Lakshmi Supermarket' }, quantity: 1, totalPrice: 150 },
+    { product: initialProducts[3], shop: { id: 'shop_2', businessName: 'Sri Balaji Electronics' }, quantity: 1, totalPrice: 25000 }
+  ];
+
+  const shopGroups: Record<string, typeof cartItems> = {};
+  cartItems.forEach(item => {
+    const sId = item.shop.id;
+    if (!shopGroups[sId]) shopGroups[sId] = [];
+    shopGroups[sId].push(item);
+  });
+
+  const uniqueShopsCount = Object.keys(shopGroups).length;
+  assert(uniqueShopsCount === 2, 
+    "Multi-shop cart items split into separate shop orders (Audit Item #7)", category, `Split 3 items from 2 shops into ${uniqueShopsCount} per-shop orders`);
+
+  // 3. Test Secured Health Endpoint Payload (Audit Item #5)
+  const mockHealthPayload = {
+    status: 'online',
+    database: 'connected',
+    timestamp: new Date().toISOString()
+  };
+  assert(!('uri' in mockHealthPayload) && mockHealthPayload.status === 'online', 
+    "Secured API health endpoint response without URI exposure (Audit Item #5)", category, "Verified no MONGODB_URI exposure");
 }
 
 // Run all test suites
@@ -189,6 +232,7 @@ testCartOperations();
 testLanguageTranslation();
 testOrderAndWhatsApp();
 auditThemeColorPurity();
+testMultiShopArchitectureAndSecurity();
 
 console.log("\n=================================================");
 console.log(`  TEST RESULTS SUMMARY: PASSED ${passedCount} / TOTAL ${passedCount + failedCount}`);

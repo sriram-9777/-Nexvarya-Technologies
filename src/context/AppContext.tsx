@@ -395,46 +395,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nexvarya_orders', JSON.stringify(orders));
   }, [orders]);
 
+  // Helper: Collision-Resistant Order ID Generator
+  const generateOrderId = (): string => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `ORD-${timestamp}-${randomHex}`;
+  };
+
   const placeOrder = (notes?: string): Order | null => {
     if (cart.length === 0 || !currentUser) return null;
 
-    const firstShop = cart[0].shop;
-    const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    const totalAmount = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-    const discountTotal = subtotal - totalAmount;
+    // Multi-Shop Cart Splitting (Audit Item #7)
+    const shopGroups: Record<string, CartItem[]> = {};
+    cart.forEach(item => {
+      const shopId = item.shop.id;
+      if (!shopGroups[shopId]) shopGroups[shopId] = [];
+      shopGroups[shopId].push(item);
+    });
 
-    const newOrder: Order = {
-      id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-      customerId: currentUser.id,
-      customerName: currentUser.name,
-      customerMobile: currentUser.mobile,
-      customerAddress: `${currentUser.address}, ${currentUser.villageTownCity}`,
-      customerPincode: currentUser.pincode,
-      shopId: firstShop.id,
-      shopName: firstShop.businessName,
-      shopPhone: firstShop.phone,
-      shopAddress: firstShop.address,
-      items: cart.map(item => ({
-        productId: item.product.id,
-        productName: item.product.name,
-        quantity: item.quantity,
-        sellingType: item.product.sellingType,
-        baseUnitPrice: item.product.price,
-        effectiveUnitPrice: item.effectiveUnitPrice,
-        totalPrice: item.totalPrice,
-        discountAppliedText: item.savingsPerUnit > 0 ? `Saved ₹${item.savingsPerUnit * item.quantity}` : undefined
-      })),
-      subtotal,
-      discountTotal,
-      totalAmount,
-      status: 'pending',
-      createdAt: new Date().toLocaleString('en-US', { hour12: false }),
-      notes
-    };
+    const createdOrders: Order[] = [];
 
-    setOrders(prev => [newOrder, ...prev]);
+    Object.keys(shopGroups).forEach(shopId => {
+      const shopItems = shopGroups[shopId];
+      const targetShop = shopItems[0].shop;
+
+      const subtotal = shopItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+      const totalAmount = shopItems.reduce((sum, item) => sum + item.totalPrice, 0);
+      const discountTotal = subtotal - totalAmount;
+
+      const newOrder: Order = {
+        id: generateOrderId(), // Collision-Resistant ID (Audit Item #6)
+        customerId: currentUser.id,
+        customerName: currentUser.name,
+        customerMobile: currentUser.mobile,
+        customerAddress: `${currentUser.address}, ${currentUser.villageTownCity || ''}`,
+        customerPincode: currentUser.pincode,
+        shopId: targetShop.id,
+        shopName: targetShop.businessName,
+        shopPhone: targetShop.phone,
+        shopAddress: targetShop.address,
+        items: shopItems.map(item => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          sellingType: item.product.sellingType,
+          baseUnitPrice: item.product.price,
+          effectiveUnitPrice: item.effectiveUnitPrice,
+          totalPrice: item.totalPrice,
+          discountAppliedText: item.savingsPerUnit > 0 ? `Saved ₹${item.savingsPerUnit * item.quantity}` : undefined
+        })),
+        subtotal,
+        discountTotal,
+        totalAmount,
+        status: 'pending',
+        createdAt: new Date().toLocaleString('en-US', { hour12: false }),
+        notes
+      };
+
+      createdOrders.push(newOrder);
+    });
+
+    setOrders(prev => [...createdOrders, ...prev]);
     clearCart();
-    return newOrder;
+    return createdOrders[0] || null;
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {

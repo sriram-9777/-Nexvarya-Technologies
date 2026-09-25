@@ -1,7 +1,7 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
- * Checks if local MongoDB Express backend server is online.
+ * Checks if local/cloud MongoDB Express backend server is online.
  */
 export const checkBackendHealth = async (): Promise<boolean> => {
   try {
@@ -119,6 +119,24 @@ export const apiOrders = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
+    });
+    return await res.json();
+  }
+};
+
+/**
+ * MongoDB Customer Direct Enquiries API Service
+ */
+export const apiEnquiries = {
+  getAll: async () => {
+    const res = await fetch(`${API_BASE_URL}/enquiries`);
+    return await res.json();
+  },
+  create: async (enquiryData: any) => {
+    const res = await fetch(`${API_BASE_URL}/enquiries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(enquiryData)
     });
     return await res.json();
   }
