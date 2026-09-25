@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { verifyPassword, hashPassword } from '../utils/passwords';
 import { useApp } from '../context/useApp';
 import { Logo } from '../components/Logo';
-import { Lock, Mail, ArrowRight, Loader2, User as UserIcon, Store } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2, User as UserIcon, Store, Shield } from 'lucide-react';
 
 import { UserRole } from '../types';
 
@@ -53,6 +53,12 @@ export const Login: React.FC = () => {
 
       const email = googleUser.email || '';
       const name = googleUser.displayName || 'Google User';
+      const isAdminEmail = email.toLowerCase() === ADMIN_EMAIL;
+
+      if (loginRole === 'admin' && (!isAdminEmail || !googleUser.emailVerified)) {
+        setErrorMsg('Use the verified admin Google email to continue. Admin accounts cannot be created from signup.');
+        return;
+      }
 
       const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -132,7 +138,7 @@ export const Login: React.FC = () => {
       }`}>
         
         {/* Role Selector Toggle */}
-        <div className={`grid grid-cols-2 gap-2 p-1 rounded-2xl border ${
+        <div className={`grid grid-cols-3 gap-2 p-1 rounded-2xl border ${
           themeMode === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-slate-100/80 border-emerald-100'
         }`}>
           <button
@@ -146,6 +152,18 @@ export const Login: React.FC = () => {
           >
             <UserIcon className="w-4 h-4" />
             <span>{t("Customer")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLoginRole('admin')}
+            className={`py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+              loginRole === 'admin'
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                : themeMode === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Admin</span>
           </button>
           <button
             type="button"
