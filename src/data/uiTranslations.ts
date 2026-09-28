@@ -1,6 +1,7 @@
 // UI copy shared by English and Telugu. Business names and merchant-entered
 // descriptions remain in their original language.
 export const uiTelugu: Record<string, string> = {
+  'Nexvarya Technologies': 'నెక్స్‌వర్యా టెక్నాలజీస్',
   loading: 'లోడ్ అవుతోంది…',
   untrackedStock: 'లెక్క నమోదు చేయలేదు', disabled: 'నిలిపివేయబడింది', out_of_stock: 'నిల్వ లేదు', limited: 'తక్కువ నిల్వ', in_stock: 'నిల్వ ఉంది',
   saveFailed: 'సేవ్ చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.',
@@ -226,6 +227,7 @@ export const uiTelugu: Record<string, string> = {
 };
 
 export const uiEnglish: Record<string, string> = {
+  'Nexvarya Technologies': 'Nexvarya Technologies',
   ...Object.fromEntries(Object.keys(uiTelugu).map(key => [key, key])),
   loading: 'Loading…',
   untrackedStock: 'Not tracked', disabled: 'Disabled', out_of_stock: 'Out of stock', limited: 'Low stock', in_stock: 'In stock',

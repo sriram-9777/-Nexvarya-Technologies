@@ -23,36 +23,36 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className={`transition-colors duration-300 border-t pt-16 pb-8 ${
+    <footer className={`transition-colors duration-300 border-t pt-10 pb-6 ${
       themeMode === 'dark'
         ? 'bg-[#01040e] text-slate-400 border-emerald-950/80'
         : 'bg-slate-900 text-slate-300 border-slate-800'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.35fr_1fr_1fr_1.15fr] items-start gap-x-10 gap-y-8 mb-8">
           
           {/* Brand Info */}
-          <div className="space-y-4 md:col-span-1">
-            <button onClick={() => handleNav('home')} className="text-left bg-transparent">
-              <Logo size="md" variant="light" showSubtitle={true} />
+          <div className="space-y-4 md:col-span-1 min-w-0">
+            <button onClick={() => handleNav('home')} className="text-left bg-transparent block h-16">
+              <Logo size="sm" variant="light" showSubtitle={true} />
             </button>
-            <p className="text-xs leading-relaxed text-slate-400">{t("A comprehensive multi-business directory and enterprise digital platform developed by")}<strong className="text-white font-extrabold">Nexvarya Technologies</strong>.
+            <p className="max-w-xs text-xs leading-6 text-slate-400">{t("A comprehensive multi-business directory and enterprise digital platform developed by")}{' '}<strong className="text-white font-extrabold">Nexvarya Technologies</strong>.
             </p>
             
             <div className="text-xs text-slate-300 space-y-2 pt-2 border-t border-slate-900 font-medium">
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Rajahmundry, AP - 534313</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <Phone className="w-4 h-4 text-amber-400 shrink-0" />
                 <a href="tel:+917997679777" className="text-amber-300 font-extrabold hover:text-amber-200 transition-colors">
                   +91 7997679777
                 </a>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-slate-300">contact@nexvarya.com</span>
+                <a href="mailto:sriram.pinnamaneni9@gmail.com" className="text-slate-300 break-all hover:text-amber-300 transition-colors">sriram.pinnamaneni9@gmail.com</a>
               </div>
             </div>
 
@@ -63,8 +63,8 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4">{t("Quick Navigation")}</h4>
+          <div className="min-w-0">
+            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4 min-h-4">{t("Quick Navigation")}</h4>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
                 <button onClick={() => handleNav('home')} className="hover:text-emerald-400 transition-colors">
@@ -78,7 +78,6 @@ export const Footer: React.FC = () => {
                 <button onClick={() => handleNav('services-products')} className="hover:text-emerald-400 transition-colors">{t("Services We Provide")}</button>
               </li>
               <li>
-                <button onClick={() => handleNav('businesses')} className="hover:text-emerald-400 transition-colors">{t("Browse Businesses")}</button>
               </li>
               <li>
                 <button onClick={() => handleNav('home', 'contact-section')} className="hover:text-emerald-400 transition-colors">
@@ -89,11 +88,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* For Businesses */}
-          <div>
-            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4">{t("For Shop Owners")}</h4>
+          <div className="min-w-0">
+            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4 min-h-4">{t("For Shop Owners")}</h4>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
-                <button onClick={() => setActivePage('signup')} className="hover:text-emerald-400 transition-colors">{t("Register Your Business")}</button>
+                <button onClick={() => handleNav('home', 'contact-section')} className="hover:text-emerald-400 transition-colors">{t("Register Your Business")}</button>
               </li>
               <li>
                 <button onClick={() => setActivePage('login')} className="hover:text-emerald-400 transition-colors">{t("Shop Owner Login")}</button>
@@ -105,8 +104,8 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Language & Regional */}
-          <div>
-            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4">{t("Platform Language")}</h4>
+          <div className="min-w-0">
+            <h4 className="text-amber-400 text-xs font-black uppercase tracking-wider mb-4 min-h-4">{t("Platform Language")}</h4>
             <p className="text-xs text-slate-400 mb-3">{t("Regional Language Support:")}</p>
             <div className="flex flex-col gap-2.5">
               <button
@@ -136,7 +135,7 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        <div className="border-t border-slate-900 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500">
+        <div className="border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-500">
           <p>{t("© 2026 Nexvarya Technologies. All rights reserved.")}</p>
           <div className="flex items-center gap-4">
             <span className="hover:text-emerald-400 cursor-pointer">{t("Terms of Service")}</span>

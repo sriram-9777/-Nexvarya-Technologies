@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/useApp';
 import { Logo } from './Logo';
-import { Globe, Search, Menu, X, ChevronDown, Sparkles, User, LogOut, Shield, Store, Sun, Moon, ShoppingBag } from 'lucide-react';
+import { Globe, Search, Menu, X, ChevronDown, User, LogOut, Shield, Store, ShoppingBag } from 'lucide-react';
 
 interface HeaderProps {
   onOpenCart?: () => void;
@@ -9,12 +9,12 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
   const { 
-    themeMode, toggleThemeMode, cart,
+    themeMode, cart,
     language, setLanguage, t, 
     currentUser, setCurrentUser, currentRole,
     activePage, setActivePage,
     searchQuery, setSearchQuery,
-    showDemoBar, toggleDemoBar
+    
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
 
       {/* Main Header Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between min-h-20 py-3 gap-2 flex-wrap">
+        <div className="flex items-center justify-between min-h-16 py-2 gap-3">
           
           {/* Logo & Brand - Click scrolls to top of Home */}
           <button 
@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
           </button>
 
           {/* Desktop Search Box */}
-          <div className="hidden md:flex flex-1 max-w-xs mx-2">
+          {currentUser && <div className="hidden md:flex flex-1 max-w-xs mx-2">
             <div className="relative w-full">
               <input
                 type="text"
@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
               />
               <Search className="w-4 h-4 text-emerald-500 absolute left-3 top-3" />
             </div>
-          </div>
+          </div>}
 
           {/* Desktop Navigation Links (Dynamic per User Role) */}
           <nav className="hidden lg:flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider">
@@ -158,21 +158,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
                   }`}
                 >
                   {t('home')}
-                </button>
-
-                <button
-                  onClick={() => handleNavigation('businesses')}
-                  className={`px-3.5 py-2 rounded-xl transition-all ${
-                    activePage === 'businesses'
-                      ? themeMode === 'dark'
-                        ? 'text-amber-300 bg-emerald-950/80 font-black border border-amber-500/40 shadow-xs'
-                        : 'text-emerald-800 bg-emerald-50 font-black border border-emerald-300 shadow-2xs'
-                      : themeMode === 'dark'
-                        ? 'text-slate-300 hover:text-amber-300 hover:bg-slate-900'
-                        : 'text-slate-600 hover:text-emerald-900 hover:bg-slate-100'
-                  }`}
-                >
-                  {t('browseShops')}
                 </button>
 
                 <button
@@ -245,20 +230,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
                   {t('customerPortal')}
                 </button>
                 <button
-                  onClick={() => handleNavigation('businesses')}
-                  className={`px-3.5 py-2 rounded-xl transition-all ${
-                    activePage === 'businesses'
-                      ? themeMode === 'dark'
-                        ? 'text-amber-300 bg-emerald-950/80 font-black border border-amber-500/40 shadow-xs'
-                        : 'text-emerald-800 bg-emerald-50 font-black border border-emerald-300 shadow-2xs'
-                      : themeMode === 'dark'
-                        ? 'text-slate-300 hover:text-white hover:bg-slate-900'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  {t('browseShops')}
-                </button>
-                <button
                   onClick={() => handleNavigation('profile')}
                   className={`px-3.5 py-2 rounded-xl transition-all ${
                     activePage === 'profile'
@@ -279,49 +250,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
           {/* Right Action Controls: Login & Sign Up + Demo + Theme + Language */}
           <div className="flex flex-wrap max-w-full items-center gap-2 sm:gap-2.5">
 
-            <button onClick={onOpenCart} aria-label={t('yourCart')} className="relative p-2 rounded-xl border border-emerald-500/40 text-emerald-500 shrink-0">
+            {currentUser && <button onClick={onOpenCart} aria-label={t('yourCart')} className="relative p-2 rounded-xl border border-emerald-500/40 text-emerald-500 shrink-0">
               <ShoppingBag className="w-5 h-5" />
               {cart.length > 0 && <span className="absolute -top-2 -right-2 rounded-full bg-emerald-700 text-white text-[10px] px-1.5">{cart.length}</span>}
-            </button>
-            {/* Dark / Light Theme Toggle Switch */}
-            <button
-              onClick={toggleThemeMode}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                themeMode === 'dark'
-                  ? 'bg-slate-900 text-amber-300 border-amber-500/40 hover:bg-slate-800 shadow-xs'
-                  : 'bg-amber-50 text-amber-900 border-amber-300/80 hover:bg-amber-100 shadow-xs'
-              }`}
-              title={themeMode === 'dark' ? t('lightMode') : t('darkMode')}
-            >
-              {themeMode === 'dark' ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-400" />
-                  <span className="hidden sm:inline">{t('lightMode')}</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-emerald-700" />
-                  <span className="hidden sm:inline">{t('darkMode')}</span>
-                </>
-              )}
-            </button>
-            
-            {/* Demo Switcher - Shown ONLY when no user is logged in */}
-            {import.meta.env.DEV && !currentUser && (
-              <button
-                onClick={toggleDemoBar}
-                className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold transition-colors border ${
-                  themeMode === 'dark'
-                    ? 'bg-slate-900 text-emerald-400 hover:bg-slate-800 border-emerald-900/60'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-200/80'
-                }`}
-                title="Toggle Demo Mode Switcher"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">{showDemoBar ? t('hideDemo') : t('demoRoleSwitcher')}</span>
-              </button>
-            )}
-
+            </button>}
             {/* Language Selector */}
             <div className="relative">
               <button

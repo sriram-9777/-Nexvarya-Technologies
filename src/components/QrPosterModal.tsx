@@ -129,7 +129,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({ shop, onClose }) =
 
           <div className="pt-2 border-t border-slate-800 text-slate-400 text-xs flex items-center justify-center gap-1.5 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span>{t("Powered by")}<strong className="text-amber-400 font-extrabold font-heading">Nexvarya Technologies</strong></span>
+            <span>{t("Powered by")}{' '}<strong className="text-amber-400 font-extrabold font-heading">Nexvarya Technologies</strong></span>
           </div>
 
         </div>

@@ -18,20 +18,14 @@ import type { ThemeMode } from './useApp';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 0. Theme Mode State (Dark / Light)
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    const saved = readPreference('nexvarya_theme', 'dark');
-    return saved === 'light' ? 'light' : 'dark';
-  });
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
     savePreference('nexvarya_theme', mode);
   };
 
-  const toggleThemeMode = () => {
-    const nextMode = themeMode === 'dark' ? 'light' : 'dark';
-    setThemeMode(nextMode);
-  };
+  const toggleThemeMode = () => setThemeMode('light');
 
   useEffect(() => {
     document.documentElement.classList.remove('light', 'dark');

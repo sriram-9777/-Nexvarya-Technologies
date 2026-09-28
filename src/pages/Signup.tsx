@@ -43,10 +43,25 @@ export const Signup: React.FC = () => {
 
   const [errorMsg, setErrorMsg] = useState('');
 
+  const validateShopOwnerDetails = () => {
+    const required = [
+      ['owner name', fullName], ['contact mobile', mobile], ['owner address', address],
+      ['city', city], ['owner PIN code', pincode], ['shop name', shopName],
+      ['business address', businessAddress], ['business PIN code', businessPincode]
+    ];
+    const missing = required.find(([, value]) => !value.trim());
+    if (missing) {
+      setErrorMsg(`Please enter your ${missing[0]} before submitting the shop-owner application.`);
+      return false;
+    }
+    return true;
+  };
+
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
     setErrorMsg('');
     try {
+      if (accountType === 'shop_owner' && !validateShopOwnerDetails()) return;
       const { loginWithGoogleFirebase } = await import('../firebase');
       const res = await loginWithGoogleFirebase();
       const googleUser = res.user;
@@ -115,6 +130,8 @@ export const Signup: React.FC = () => {
       return;
     }
 
+    if (accountType === 'shop_owner' && !validateShopOwnerDetails()) return;
+
     if (users.some(u => u.email.toLowerCase() === email.trim().toLowerCase() || u.mobile === mobile.trim())) {
       setErrorMsg(t('accountExists')); return;
     }
@@ -152,7 +169,7 @@ export const Signup: React.FC = () => {
         openingTime,
         closingTime,
         gstNumber,
-        whatsappNumber: whatsappNumber || shopMobile || mobile,
+        whatsappNumber: whatsappNumber.trim(),
         rating: 5.0,
         reviewCount: 1
       });
@@ -186,7 +203,7 @@ export const Signup: React.FC = () => {
       </div>
 
       {/* Account Type Selector Tabs */}
-      <div className={`p-2 rounded-2xl grid grid-cols-2 gap-2 shadow-xl backdrop-blur-md border ${
+      <div className={`p-2 rounded-2xl shadow-xl backdrop-blur-md border ${
         themeMode === 'dark'
           ? 'bg-slate-900/90 border-emerald-900/40'
           : 'bg-white border-slate-200'
@@ -211,23 +228,6 @@ export const Signup: React.FC = () => {
           </div>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setAccountType('shop_owner')}
-          className={`p-4 rounded-xl text-left transition-all flex items-start gap-3 border ${
-            accountType === 'shop_owner'
-              ? 'bg-amber-950/80 border-amber-500/60 text-white shadow-md shadow-amber-950/50'
-              : 'bg-slate-950/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
-        >
-          <div className={`p-2.5 rounded-lg ${accountType === 'shop_owner' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-sm' : 'bg-slate-800 text-slate-400'}`}>
-            <Store className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-sm text-white">{t('shopOwnerAccount')}</h3>
-            <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{t('shopOwnerDesc')}</p>
-          </div>
-        </button>
       </div>
 
       {/* Quick Google Sign Up Card */}

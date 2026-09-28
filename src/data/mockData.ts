@@ -17,8 +17,8 @@ export const initialUsers: User[] = [
   {
     id: 'user_admin',
     name: 'Nexvarya Executive Admin',
-    email: 'admin@nexvarya.com',
-    mobile: '9876543210',
+    email: 'sriram.pinnamaneni9@gmail.com',
+    mobile: '7997679777',
     address: 'Nexvarya Tech Hub, MG Road',
     villageTownCity: 'Vijayawada',
     pincode: '520002',

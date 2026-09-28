@@ -4,10 +4,10 @@
   --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   
-  --emerald-primary: #059669;
-  --emerald-dark: #047857;
-  --emerald-light: #34d399;
-  --emerald-glow: rgba(5, 150, 105, 0.25);
+  --emerald-primary: #7c3aed;
+  --emerald-dark: #5b21b6;
+  --emerald-light: #c084fc;
+  --emerald-glow: rgba(124, 58, 237, 0.25);
 
   --gold-primary: #f59e0b;
   --gold-light: #fbbf24;
@@ -22,7 +22,7 @@
   --bg-card-hover: #f1f5f9;
   --text-main: #0f172a;
   --text-muted: #475569;
-  --border-light: rgba(5, 150, 105, 0.2);
+  --border-light: rgba(124, 58, 237, 0.22);
   --scroll-track: #e2e8f0;
 }
 
@@ -33,7 +33,7 @@
   --bg-card-hover: #1e293b;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-light: rgba(5, 150, 105, 0.3);
+  --border-light: rgba(124, 58, 237, 0.32);
   --scroll-track: #0f172a;
 }
 
@@ -550,3 +550,20 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 #printable-poster { background: white; color: #0f172a; }
 #printable-poster :is(.text-slate-900,.text-white) { color: #0f172a; }
 [data-theme='light'] .theme-inverse { color: #f8fafc; }
+
+/* Premium brand accents: keep interface controls aligned with the approved logo. */
+[data-theme='dark'] :is([class*='text-emerald-'], [class*='text-teal-']) { color: #d8b4fe; }
+[data-theme='light'] :is([class*='text-emerald-'], [class*='text-teal-']) { color: #6d28d9; }
+:is([class*='border-emerald-'], [class*='border-teal-']) { border-color: rgba(168, 85, 247, 0.45); }
+[data-theme='dark'] :is([class*='bg-emerald-'], [class*='bg-teal-']) { background-color: #3b0764; }
+[data-theme='light'] :is([class*='bg-emerald-'], [class*='bg-teal-']) { background-color: #f3e8ff; }
+
+/* Keep dense dashboard controls usable on phones and small tablets. */
+html, body, #root { max-width: 100%; overflow-x: hidden; }
+button, a, input, select, textarea { max-width: 100%; }
+@media (max-width: 640px) {
+  h1 { line-height: 1.15; }
+  h2 { line-height: 1.2; }
+  table { min-width: 640px; }
+  [role='dialog'] { max-height: 100dvh; }
+}

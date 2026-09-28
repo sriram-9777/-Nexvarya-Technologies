@@ -71,7 +71,7 @@ export const Profile: React.FC = () => {
         address: shopAddress || address,
         openingTime,
         closingTime,
-        whatsappNumber: whatsappNumber || mobile,
+        whatsappNumber: whatsappNumber.trim(),
         gstNumber,
         description
       });

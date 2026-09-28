@@ -3,7 +3,6 @@ import { AppProvider } from './context/AppContext';
 import { useApp } from './context/useApp';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { RoleSwitcher } from './components/RoleSwitcher';
 import { CartModal } from './components/CartModal';
 
 import { Home } from './pages/Home';
@@ -21,7 +20,7 @@ const ShopOwnerDashboard = lazy(() => import('./pages/dashboard/ShopOwnerDashboa
 const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
 const MainLayout: React.FC = () => {
-  const { activePage, currentUser, showDemoBar, themeMode, t } = useApp();
+  const { activePage, currentUser, themeMode, t } = useApp();
   const [cartOpen, setCartOpen] = useState(false);
 
   const renderPage = () => {
@@ -59,9 +58,6 @@ const MainLayout: React.FC = () => {
     <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
       themeMode === 'dark' ? 'bg-[#020617] text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
-      {/* Demo Switcher - shown ONLY when no user is logged in */}
-      {import.meta.env.DEV && showDemoBar && !currentUser && <RoleSwitcher />}
-
       {/* Main Header */}
       <Header onOpenCart={() => setCartOpen(true)} />
 

@@ -24,7 +24,7 @@ export const HeroSection: React.FC = () => {
             : 'bg-white/90 border-emerald-200/80 text-slate-900'
         }`}>
           <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-          <span className="text-xs font-extrabold tracking-wide">{t("Official Platform of")}<strong className="text-emerald-500 font-black">Nexvarya Technologies</strong>
+          <span className="text-xs font-extrabold tracking-wide">{t("Official Platform of")}{' '}<strong className="text-emerald-500 font-black">{t("Nexvarya Technologies")}</strong>
           </span>
         </div>
 
@@ -47,7 +47,7 @@ export const HeroSection: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setActivePage('signup')}
+              onClick={() => setActivePage('contact')}
               className={`px-6 py-3.5 rounded-2xl font-black text-xs shadow-sm flex items-center gap-2 transition-all hover:scale-105 border ${
                 themeMode === 'dark'
                   ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-500/40'
@@ -71,23 +71,23 @@ export const HeroSection: React.FC = () => {
               <Building2 className="w-6 h-6 text-emerald-500" />
               <span className="font-extrabold text-sm tracking-wide">{t("Nexvarya Technologies Corporate Desk")}</span>
             </div>
-            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{t("Verified Enterprise Partner")}</span>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30">{t("Nexvarya Technologies")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Phone & WhatsApp")}</span>
-              <a href="tel:+919494300868" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors">
+              <a href="tel:+917997679777" className="text-xs font-black flex items-center gap-1.5 hover:text-fuchsia-400 transition-colors">
                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
-                <span>+91 94943 00868</span>
+                <span>+91 7997679777</span>
               </a>
             </div>
 
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Corporate Email")}</span>
-              <a href="mailto:ramachandraphani8@gmail.com" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors truncate">
+              <a href="mailto:sriram.pinnamaneni9@gmail.com" className="text-xs font-black flex items-center gap-1.5 hover:text-fuchsia-400 transition-colors truncate">
                 <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="truncate">ramachandraphani8@gmail.com</span>
+                <span className="truncate">sriram.pinnamaneni9@gmail.com</span>
               </a>
             </div>
 
