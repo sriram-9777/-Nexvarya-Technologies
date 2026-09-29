@@ -4,7 +4,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
 async function request(url: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) });
+  const token = auth.currentUser ? await auth.currentUser.getIdToken() : undefined;
+  const headers = new Headers(init?.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const response = await fetch(url, { ...init, headers, signal: AbortSignal.timeout(10000) });
   if (!response.ok) throw new Error('Request failed (' + response.status + ')');
   return response;
 }
@@ -137,10 +140,8 @@ export const apiOrders = {
  * MongoDB Customer Direct Enquiries API Service
  */
 export const apiEnquiries = {
-  getAll: async (managementKey?: string) => {
-    const res = await request(`${API_BASE_URL}/enquiries`, managementKey ? {
-      headers: { Authorization: `Bearer ${managementKey}` }
-    } : undefined);
+  getAll: async () => {
+    const res = await request(`${API_BASE_URL}/enquiries`);
     return await res.json();
   },
   create: async (enquiryData: any) => {
@@ -152,3 +153,4 @@ export const apiEnquiries = {
     return await res.json();
   }
 };
+import { auth } from '../firebase';

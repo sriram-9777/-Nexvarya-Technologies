@@ -12,7 +12,6 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'shops' | 'categories' | 'users' | 'enquiries'>('shops');
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [enquiriesError, setEnquiriesError] = useState('');
-  const [managementKey, setManagementKey] = useState('');
   
   const [catName, setCatName] = useState('');
   const [catNameTe, setCatNameTe] = useState('');
@@ -23,11 +22,10 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab !== 'enquiries') return;
     setEnquiriesError('');
-    if (!managementKey) return;
-    apiEnquiries.getAll(managementKey).then(setEnquiries).catch(() => {
+    apiEnquiries.getAll().then(setEnquiries).catch(() => {
       setEnquiriesError('Unable to load enquiries. Configure the secure management API key.');
     });
-  }, [activeTab, managementKey]);
+  }, [activeTab]);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,13 +317,6 @@ export const AdminDashboard: React.FC = () => {
       {activeTab === 'enquiries' && (
         <div className="space-y-4">
           <h2 className="text-base font-bold text-white font-heading">Customer Enquiries ({enquiries.length})</h2>
-          {!managementKey && <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-4 space-y-3">
-            <p className="text-xs text-amber-200">Enter the secure management key configured on the backend to load enquiries. It is used only in this browser session.</p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input type="password" value={managementKey} onChange={(e) => setManagementKey(e.target.value)} placeholder="API management key" className="flex-1 rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white" />
-              <button onClick={() => setManagementKey(managementKey.trim())} className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950">Load Enquiries</button>
-            </div>
-          </div>}
           {enquiriesError && <p className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-200">{enquiriesError}</p>}
           <div className="space-y-3">
             {enquiries.map((enquiry) => (
