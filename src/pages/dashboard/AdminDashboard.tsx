@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/useApp';
+import { apiEnquiries } from '../../api';
 import { Shield, Store, Users, CheckCircle, Ban, Grid, Sparkles } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -8,13 +9,23 @@ export const AdminDashboard: React.FC = () => {
     updateUserStatus, addCategory, t 
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'shops' | 'categories' | 'users'>('shops');
+  const [activeTab, setActiveTab] = useState<'shops' | 'categories' | 'users' | 'enquiries'>('shops');
+  const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [enquiriesError, setEnquiriesError] = useState('');
   
   const [catName, setCatName] = useState('');
   const [catNameTe, setCatNameTe] = useState('');
   const [catDesc, setCatDesc] = useState('');
 
   const pendingShopsCount = shops.filter(s => s.status === 'pending').length;
+
+  useEffect(() => {
+    if (activeTab !== 'enquiries') return;
+    setEnquiriesError('');
+    apiEnquiries.getAll().then(setEnquiries).catch(() => {
+      setEnquiriesError('Unable to load enquiries. Configure the secure management API key.');
+    });
+  }, [activeTab]);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,6 +130,16 @@ export const AdminDashboard: React.FC = () => {
         >
           <Users className="w-4 h-4" />
           <span>{t('manageUsers')} ({users.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('enquiries')}
+          className={`pb-3 border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'enquiries' ? 'border-amber-400 text-amber-400 font-black' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>✉️</span>
+          <span>Enquiries ({enquiries.length})</span>
         </button>
       </div>
 
@@ -289,6 +310,30 @@ export const AdminDashboard: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'enquiries' && (
+        <div className="space-y-4">
+          <h2 className="text-base font-bold text-white font-heading">Customer Enquiries ({enquiries.length})</h2>
+          {enquiriesError && <p className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-200">{enquiriesError}</p>}
+          <div className="space-y-3">
+            {enquiries.map((enquiry) => (
+              <article key={enquiry.id} className="bg-slate-900/90 border border-emerald-900/40 p-5 rounded-2xl shadow-2xl">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-white">{enquiry.name}</h3>
+                    <p className="text-xs text-slate-400">{enquiry.phone}{enquiry.email ? ` • ${enquiry.email}` : ''}</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-700/60">{enquiry.status || 'new'}</span>
+                </div>
+                <p className="mt-3 text-xs text-amber-300">{enquiry.serviceInterest}</p>
+                <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{enquiry.message}</p>
+                <p className="mt-3 text-[11px] text-slate-500">{enquiry.createdAt}</p>
+              </article>
+            ))}
+            {!enquiriesError && enquiries.length === 0 && <p className="text-sm text-slate-400">No enquiries found.</p>}
           </div>
         </div>
       )}
