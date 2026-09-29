@@ -53,10 +53,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 2. User & Role state
   const [users, setUsers] = useState<User[]>(() => readStored('nexvarya_users', initialUsers));
 
-  const [currentUser, setCurrentUserState] = useState<User | null>(() => {
-    const saved = readStored<User | null>('nexvarya_current_user', null);
-    return users.find(u => u.id === saved?.id && u.status === 'active') || null;
-  });
+  // Require an explicit login after a full page refresh. The stored profile is
+  // still retained for local data, but it must not silently restore a session.
+  const [currentUser, setCurrentUserState] = useState<User | null>(null);
 
   const [currentRole, setCurrentRoleState] = useState<UserRole>(() => {
     return currentUser ? currentUser.role : 'customer';
