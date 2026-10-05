@@ -23,7 +23,7 @@ export const AdminDashboard: React.FC = () => {
     if (activeTab !== 'enquiries') return;
     setEnquiriesError('');
     apiEnquiries.getAll().then(setEnquiries).catch(() => {
-      setEnquiriesError('Unable to load enquiries. Configure the secure management API key.');
+      setEnquiriesError('Unable to load business requests. Check the secure admin connection.');
     });
   }, [activeTab]);
 
@@ -139,7 +139,7 @@ export const AdminDashboard: React.FC = () => {
           }`}
         >
           <span>✉️</span>
-          <span>Enquiries ({enquiries.length})</span>
+          <span>Business Requests ({enquiries.length})</span>
         </button>
       </div>
 
@@ -316,7 +316,7 @@ export const AdminDashboard: React.FC = () => {
 
       {activeTab === 'enquiries' && (
         <div className="space-y-4">
-          <h2 className="text-base font-bold text-white font-heading">Customer Enquiries ({enquiries.length})</h2>
+          <h2 className="text-base font-bold text-white font-heading">Business Requests ({enquiries.length})</h2>
           {enquiriesError && <p className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-200">{enquiriesError}</p>}
           <div className="space-y-3">
             {enquiries.map((enquiry) => (
@@ -333,7 +333,7 @@ export const AdminDashboard: React.FC = () => {
                 <p className="mt-3 text-[11px] text-slate-500">{enquiry.createdAt}</p>
               </article>
             ))}
-            {!enquiriesError && enquiries.length === 0 && <p className="text-sm text-slate-400">No enquiries found.</p>}
+            {!enquiriesError && enquiries.length === 0 && <p className="text-sm text-slate-400">No business requests found.</p>}
           </div>
         </div>
       )}
