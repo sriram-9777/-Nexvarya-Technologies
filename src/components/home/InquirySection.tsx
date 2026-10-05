@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/useApp';
-import { apiEnquiries } from '../../api';
+import { createBusinessRequest } from '../../firestore';
 import { Send, CheckCircle2, Phone, Mail, User, MessageSquare } from 'lucide-react';
 
 export const InquirySection: React.FC = () => {
@@ -32,7 +32,7 @@ export const InquirySection: React.FC = () => {
     };
 
     try {
-      await apiEnquiries.create(enquiryData);
+      await createBusinessRequest(enquiryData);
       setSubmitted(true);
     } catch {
       setError(true);

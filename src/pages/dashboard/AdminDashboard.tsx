@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/useApp';
-import { apiEnquiries } from '../../api';
+import { getBusinessRequests } from '../../firestore';
 import { Shield, Store, Users, CheckCircle, Ban, Grid, Sparkles } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -12,8 +12,6 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'shops' | 'categories' | 'users' | 'enquiries'>('shops');
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [enquiriesError, setEnquiriesError] = useState('');
-  const [managementKey, setManagementKey] = useState(() => sessionStorage.getItem('nexvarya_management_key') || localStorage.getItem('nexvarya_management_key') || '');
-  const [rememberManagementKey, setRememberManagementKey] = useState(() => Boolean(localStorage.getItem('nexvarya_management_key')));
   
   const [catName, setCatName] = useState('');
   const [catNameTe, setCatNameTe] = useState('');
@@ -24,11 +22,10 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab !== 'enquiries') return;
     setEnquiriesError('');
-    if (!managementKey) return;
-    apiEnquiries.getAll(managementKey).then(setEnquiries).catch(() => {
-      setEnquiriesError('Unable to load business requests. Check the secure admin connection.');
+    getBusinessRequests().then(setEnquiries).catch(() => {
+      setEnquiriesError('Unable to load business requests. Check Firebase Firestore access.');
     });
-  }, [activeTab, managementKey]);
+  }, [activeTab]);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,12 +317,6 @@ export const AdminDashboard: React.FC = () => {
       {activeTab === 'enquiries' && (
         <div className="space-y-4">
           <h2 className="text-base font-bold text-white font-heading">Business Requests ({enquiries.length})</h2>
-          {!managementKey && <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-4 space-y-3">
-            <p className="text-xs text-amber-200">Enter the Render management key. You can remember it on this browser so you do not need to enter it again.</p>
-            <input type="password" onChange={(e) => setManagementKey(e.target.value.trim())} placeholder="API management key" className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white" />
-            <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={rememberManagementKey} onChange={(e) => setRememberManagementKey(e.target.checked)} /> Remember this browser</label>
-            <button onClick={() => { if (managementKey) (rememberManagementKey ? localStorage : sessionStorage).setItem('nexvarya_management_key', managementKey); }} className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950">Load Business Requests</button>
-          </div>}
           {enquiriesError && <p className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-4 text-xs text-rose-200">{enquiriesError}</p>}
           <div className="space-y-3">
             {enquiries.map((enquiry) => (
