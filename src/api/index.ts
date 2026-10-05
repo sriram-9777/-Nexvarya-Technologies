@@ -140,8 +140,8 @@ export const apiOrders = {
  * MongoDB Customer Direct Enquiries API Service
  */
 export const apiEnquiries = {
-  getAll: async () => {
-    const res = await request(`${API_BASE_URL}/enquiries`);
+  getAll: async (managementKey?: string) => {
+    const res = await request(`${API_BASE_URL}/enquiries`, managementKey ? { headers: { Authorization: `Bearer ${managementKey}` } } : undefined);
     return await res.json();
   },
   create: async (enquiryData: any) => {
