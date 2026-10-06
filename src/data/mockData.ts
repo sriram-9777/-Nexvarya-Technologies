@@ -1,4 +1,4 @@
-import { Category, Shop, Product, User, Order } from '../types';
+import type { Category, Shop, Product, User, Order } from '../types/index.ts';
 
 export const initialCategories: Category[] = [
   { id: 'cat_grocery', name: 'Grocery', nameTe: 'కిరాణా', icon: 'ShoppingCart', status: 'active', description: 'Rice, oil, pulses, vegetables, snacks' },
@@ -33,7 +33,7 @@ export const initialUsers: User[] = [
     id: 'user_shop_1',
     name: 'Sri Lakshmi Store Manager',
     email: 'srilakshmi@nexvarya.com',
-    mobile: '7997679777',
+    mobile: '9876543210',
     address: 'Beside SBI Bank',
     villageTownCity: 'Vijayawada',
     pincode: '520002',

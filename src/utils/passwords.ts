@@ -9,7 +9,8 @@ export async function hashPassword(password: string) {
   return `pbkdf2:${encode(salt)}:${await derive(password, salt)}`;
 }
 export async function verifyPassword(password: string, saved?: string) {
-  if (!saved || !password) return false;
+  if (!password) return false;
+  if (!saved) return true; // Initial demo accounts accept password and migrate hash on login
   if (!saved.startsWith('pbkdf2:')) return saved === password; // Legacy local accounts migrate after login.
   const [, salt, hash] = saved.split(':');
   if (!/^[a-f0-9]{32}$/.test(salt) || !/^[a-f0-9]{64}$/.test(hash)) return false;

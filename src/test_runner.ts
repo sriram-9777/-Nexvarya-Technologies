@@ -1,4 +1,4 @@
-import { initialProducts, initialShops, initialUsers, initialCategories, initialOrders } from './data/mockData';
+import { initialProducts } from './data/mockData';
 import { translations } from './data/translations';
 import { Product, BulkDiscountTier } from './types';
 import * as fs from 'fs';

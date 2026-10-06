@@ -23,9 +23,15 @@ export const Login: React.FC = () => {
       return;
     }
 
-    const matchedUser = users.find(
-      u => u.email.toLowerCase() === emailOrMobile.trim().toLowerCase() || u.mobile === emailOrMobile.trim()
+    const input = emailOrMobile.trim().toLowerCase();
+    let matchedUser = users.find(
+      u => (u.email.toLowerCase() === input || u.mobile === emailOrMobile.trim()) && u.role === loginRole
     );
+    if (!matchedUser) {
+      matchedUser = users.find(
+        u => u.email.toLowerCase() === input || u.mobile === emailOrMobile.trim()
+      );
+    }
 
     if (matchedUser) {
       if (matchedUser.status === 'blocked' || !(await verifyPassword(password, matchedUser.password))) {
@@ -35,6 +41,7 @@ export const Login: React.FC = () => {
       const userToLogin = { ...matchedUser, password: matchedUser.password?.startsWith('pbkdf2:') ? matchedUser.password : await hashPassword(password) };
       updateUser(matchedUser.id, { password: userToLogin.password });
       setCurrentUser(userToLogin);
+      setCurrentRole(targetRole);
       if (targetRole === 'admin') setActivePage('admin-dashboard');
       else if (targetRole === 'shop_owner') setActivePage('shop-dashboard');
       else setActivePage('customer-dashboard');

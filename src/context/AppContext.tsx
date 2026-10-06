@@ -108,6 +108,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 3. Shop State
   const [shops, setShops] = useState<Shop[]>(() => readStored('nexvarya_shops', initialShops));
+  // 4. Products State
+  const [products, setProducts] = useState<Product[]>(() => readStored('nexvarya_products', initialProducts));
 
   // Prefer approved cloud data when the backend is available, while retaining
   // the local catalogue as an offline fallback.
@@ -157,9 +159,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const myShop = currentUser?.role === 'shop_owner' 
     ? shops.find(s => s.ownerId === currentUser.id)
     : undefined;
-
-  // 4. Products State
-  const [products, setProducts] = useState<Product[]>(() => readStored('nexvarya_products', initialProducts));
 
   useEffect(() => {
     saveStored('nexvarya_products', products);

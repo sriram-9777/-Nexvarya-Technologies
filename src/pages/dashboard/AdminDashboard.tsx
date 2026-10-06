@@ -21,10 +21,20 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (activeTab !== 'enquiries') return;
-    setEnquiriesError('');
-    getBusinessRequests().then(setEnquiries).catch(() => {
-      setEnquiriesError('Unable to load business requests. Check Firebase Firestore access.');
-    });
+    let cancelled = false;
+    getBusinessRequests()
+      .then(res => {
+        if (!cancelled) {
+          setEnquiriesError('');
+          setEnquiries(res);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEnquiriesError('Unable to load business requests. Check Firebase Firestore access.');
+        }
+      });
+    return () => { cancelled = true; };
   }, [activeTab]);
 
   const handleAddCategory = (e: React.FormEvent) => {

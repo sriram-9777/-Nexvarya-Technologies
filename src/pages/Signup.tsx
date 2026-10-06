@@ -3,7 +3,7 @@ import { hashPassword } from '../utils/passwords';
 import { useApp } from '../context/useApp';
 import { Logo } from '../components/Logo';
 import { UserRole, LanguageCode } from '../types';
-import { User as UserIcon, Store, ArrowRight, Loader2 } from 'lucide-react';
+import { User as UserIcon, ArrowRight, Loader2 } from 'lucide-react';
 
 
 export const Signup: React.FC = () => {
@@ -154,6 +154,9 @@ export const Signup: React.FC = () => {
       role: accountType,
       status: 'active'
     });
+
+    setCurrentUser(createdUser);
+    setCurrentRole(accountType);
 
     if (accountType === 'shop_owner') {
       addShop({
