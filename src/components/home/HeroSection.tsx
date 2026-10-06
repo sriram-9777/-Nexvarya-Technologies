@@ -71,13 +71,13 @@ export const HeroSection: React.FC = () => {
               <Building2 className="w-6 h-6 text-emerald-500" />
               <span className="font-extrabold text-sm tracking-wide">{t("Nexvarya Technologies Corporate Desk")}</span>
             </div>
-            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30">{t("Nexvarya Technologies")}</span>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{t("Nexvarya Technologies")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Phone & WhatsApp")}</span>
-              <a href="tel:+917997679777" className="text-xs font-black flex items-center gap-1.5 hover:text-fuchsia-400 transition-colors">
+              <a href="tel:+917997679777" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors">
                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
                 <span>+91 7997679777</span>
               </a>
@@ -85,7 +85,7 @@ export const HeroSection: React.FC = () => {
 
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">{t("Corporate Email")}</span>
-              <a href="mailto:sriram.pinnamaneni9@gmail.com" className="text-xs font-black flex items-center gap-1.5 hover:text-fuchsia-400 transition-colors truncate">
+              <a href="mailto:sriram.pinnamaneni9@gmail.com" className="text-xs font-black flex items-center gap-1.5 hover:text-emerald-400 transition-colors truncate">
                 <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span className="truncate">sriram.pinnamaneni9@gmail.com</span>
               </a>

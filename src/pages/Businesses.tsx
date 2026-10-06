@@ -201,7 +201,7 @@ export const Businesses: React.FC = () => {
                 <div className={`p-4 border-t flex items-center justify-between ${
                   themeMode === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-100'
                 }`}>
-                  <span className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{itemsCount}{t("Products/Services")}</span>
+                  <span className={`text-xs font-medium ${themeMode === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>{itemsCount} {t("Products/Services")}</span>
                   <button
                     onClick={() => handleShopClick(shop.id)}
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all"

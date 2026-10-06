@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
           </button>
 
           {/* Desktop Search Box */}
-          {currentUser && <div className="hidden md:flex flex-1 max-w-xs mx-2">
+          <div className="hidden md:flex flex-1 max-w-xs mx-2">
             <div className="relative w-full">
               <input
                 type="text"
@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCart }) => {
               />
               <Search className="w-4 h-4 text-emerald-500 absolute left-3 top-3" />
             </div>
-          </div>}
+          </div>
 
           {/* Desktop Navigation Links (Dynamic per User Role) */}
           <nav className="hidden lg:flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider">
