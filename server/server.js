@@ -36,7 +36,7 @@ const generateCollisionResistantOrderId = () => {
 };
 
 // Never accept a public user ID as an authentication credential.
-app.use(apiAccess(process.env.API_MANAGEMENT_KEY));
+app.use(apiAccess());
 
 // 🏥 Health Check Endpoint (Secured: No DB URI Exposure)
 app.get('/api/health', (req, res) => {

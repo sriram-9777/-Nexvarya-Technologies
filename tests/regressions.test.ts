@@ -136,16 +136,16 @@ test('navigation restores pages and shop links and rejects unknown pages', () =>
   assert.deepEqual(readRoute('?page=unknown'), { page:'home', shop:null });
 });
 
-test('management API rejects public user IDs and fails closed without a key', () => {
-  const call = (key: string | undefined, path: string, token = '') => {
+test('Firebase admin API rejects public user IDs and remains public only for directory routes', () => {
+  const call = (path: string, token = '') => {
     let result = 200;
     let allowed = false;
     const response = {status(code: number) { result = code; return this; }, json() { return this; }};
-    apiAccess(key)({method:'GET',path,headers:{authorization:token}}, response, () => { allowed = true; });
+    apiAccess()({method:'GET',path,headers:{authorization:token}}, response, () => { allowed = true; });
     return { result, allowed };
   };
-  assert.deepEqual(call(undefined,'/api/users'), { result:503, allowed:false });
-  assert.deepEqual(call('test-key','/api/orders','Bearer user_admin'), { result:401, allowed:false });
-  assert.deepEqual(call('test-key','/api/orders','Bearer test-key'), { result:200, allowed:true });
-  assert.equal(call(undefined,'/api/shops').allowed, true);
+  assert.deepEqual(call('/api/users'), { result:503, allowed:false });
+  assert.deepEqual(call('/api/orders','Bearer user_admin'), { result:503, allowed:false });
+  assert.deepEqual(call('/api/orders','Bearer test-key'), { result:503, allowed:false });
+  assert.equal(call('/api/shops').allowed, true);
 });
