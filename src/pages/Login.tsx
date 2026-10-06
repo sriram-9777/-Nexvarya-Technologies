@@ -9,7 +9,7 @@ import { UserRole } from '../types';
 const ADMIN_EMAIL = 'sriram.pinnamaneni9@gmail.com';
 
 export const Login: React.FC = () => {
-  const { themeMode, t, users, setCurrentUser, setCurrentRole, setActivePage, addUser, updateUser } = useApp();
+  const { themeMode, t, users, setCurrentUser, setCurrentRole, setActivePage, addUser, updateUser, addShop, shops } = useApp();
   const [loginRole, setLoginRole] = useState<UserRole>('customer');
   const [emailOrMobile, setEmailOrMobile] = useState('');
   const [password, setPassword] = useState('');
@@ -102,6 +102,25 @@ export const Login: React.FC = () => {
           status: 'active'
         });
 
+        if (accountRole === 'shop_owner' && !shops.some(s => s.ownerId === newUser.id)) {
+          addShop({
+            ownerId: newUser.id,
+            businessName: `${name}'s Store`,
+            categoryId: 'cat_grocery',
+            address: 'Vijayawada',
+            pincode: '520002',
+            state: 'Andhra Pradesh',
+            phone: googleUser.phoneNumber || '9876543210',
+            email,
+            description: `${name}'s Store offering quality products & services.`,
+            openingTime: '09:00 AM',
+            closingTime: '09:00 PM',
+            gstNumber: '',
+            whatsappNumber: (googleUser.phoneNumber || '9876543210').trim(),
+            rating: 5.0,
+            reviewCount: 1
+          });
+        }
 
         setCurrentUser(newUser);
         setCurrentRole(accountRole);

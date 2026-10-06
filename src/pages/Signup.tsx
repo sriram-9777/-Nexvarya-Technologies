@@ -96,8 +96,28 @@ export const Signup: React.FC = () => {
 
         setCurrentUser(newUser);
         setCurrentRole(accountType);
-        if (accountType === 'shop_owner') setActivePage('shop-dashboard');
-        else setActivePage('customer-dashboard');
+        if (accountType === 'shop_owner') {
+          addShop({
+            ownerId: newUser.id,
+            businessName: shopName.trim() || `${name}'s Store`,
+            categoryId: categoryId || 'cat_grocery',
+            address: businessAddress || address || 'Vijayawada',
+            pincode: businessPincode || pincode || '520002',
+            state: businessState || state || 'Andhra Pradesh',
+            phone: shopMobile || mobile || googleUser.phoneNumber || '9876543210',
+            email: shopEmail || email,
+            description: description || `${shopName || name + "'s Store"} offering products & services.`,
+            openingTime: openingTime || '09:00 AM',
+            closingTime: closingTime || '09:00 PM',
+            gstNumber: gstNumber || '',
+            whatsappNumber: (whatsappNumber || mobile || googleUser.phoneNumber || '9876543210').trim(),
+            rating: 5.0,
+            reviewCount: 1
+          });
+          setActivePage('shop-dashboard');
+        } else {
+          setActivePage('customer-dashboard');
+        }
       }
     } catch (err: any) {
       console.error('Google Signup Error:', err);
